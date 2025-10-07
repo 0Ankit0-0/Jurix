@@ -38,12 +38,7 @@ class GeminiService:
             "gemini-2.5-flash-lite",    # Lightweight, cheapest for scale
             "gemini-2.0-flash-lite",    # Lightweight, cheapest for scale
             "gemini-2.0-flash",         # Previous stable Flash
-            "gemini-1.5-pro",           # 1.5 Pro model
-            "gemini-1.5-flash",         # 1.5 Flash model
-            "gemini-1.0-pro",           # Legacy 1.0 Pro
-            "gemini-pro",               # Legacy generic Pro alias
-            "gemini-flash",             # Legacy generic Flash alias
-            "text-bison-001",           # PaLM 2 fallback
+            
         ]
 
         

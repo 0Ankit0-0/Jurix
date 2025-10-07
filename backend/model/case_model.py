@@ -246,13 +246,61 @@ def get_public_cases(limit=10):
     if case_collection is None:
         raise ConnectionError("Database connection not available")
     try:
-        cases = list(case_collection.find({"is_public": True}).limit(limit).sort("created_at", -1))
+        # ✅ FIX: Use aggregation to join user data for author name
+        pipeline = [
+            {'$match': {'is_public': True}},
+            {'$sort': {'created_at': -1}},
+            {'$limit': limit},
+            {
+                # Convert user_id string to ObjectId for lookup
+                '$addFields': {
+                    'userObjectId': {
+                        '$cond': {
+                           'if': { '$and': [{'$ne': ['$user_id', None]}, {'$ne': ['$user_id', ""]}]},
+                           'then': { '$toObjectId': '$user_id' },
+                           'else': None
+                        }
+                    }
+                }
+            },
+            {
+                '$lookup': {
+                    'from': 'users',
+                    'localField': 'userObjectId',
+                    'foreignField': '_id',
+                    'as': 'userDetails'
+                }
+            },
+            {
+                '$unwind': {
+                    'path': '$userDetails',
+                    'preserveNullAndEmptyArrays': True # Keep cases even if user is not found
+                }
+            },
+            {
+                '$addFields': {
+                    'user': {
+                        'name': '$userDetails.name',
+                        'avatarUrl': '$userDetails.avatar'
+                    }
+                }
+            },
+            {
+                '$project': {
+                    'userDetails': 0,
+                    'userObjectId': 0
+                }
+            }
+        ]
+        cases = list(case_collection.aggregate(pipeline))
+        
         # Convert ObjectId to string for all cases
         for case in cases:
             case['_id'] = str(case['_id'])
         
-        print(f"✅ Retrieved {len(cases)} public cases")
+        print(f"✅ Retrieved {len(cases)} public cases with user info")
         return cases
     except Exception as e:
         print(f"❌ Error retrieving public cases: {e}")
         raise e
+

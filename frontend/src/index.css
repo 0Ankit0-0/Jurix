@@ -48,123 +48,56 @@
 }
 
 :root {
-  /* Light mode - Professional neutral theme with blue accents */
+  /* New Light Mode Palette */
   --background: oklch(98% 0 0);
-  /* Clean white background */
-  --foreground: oklch(20% 0 0);
-  /* Dark gray text for readability */
+  --foreground: oklch(15% 0.02 240);
   --card: oklch(100% 0 0);
-  /* Pure white cards */
-  --card-foreground: oklch(20% 0 0);
-  /* Dark gray text */
+  --card-foreground: oklch(15% 0.02 240);
   --popover: oklch(100% 0 0);
-  --popover-foreground: oklch(20% 0 0);
-  --primary: oklch(55% 0.20 250);
-  /* Professional blue */
+  --popover-foreground: oklch(15% 0.02 240);
+  --primary: oklch(58% 0.22 255); /* Brighter Blue */
   --primary-foreground: oklch(98% 0 0);
-  /* White text on blue */
-  --secondary: oklch(92% 0 0);
-  /* Light gray */
-  --secondary-foreground: oklch(20% 0 0);
-  /* Dark text */
-  --muted: oklch(96% 0 0);
-  /* Very light gray */
-  --muted-foreground: oklch(50% 0 0);
-  /* Medium gray */
-  --accent: oklch(55% 0.20 250);
-  /* Blue accent */
+  --secondary: oklch(94% 0.01 240);
+  --secondary-foreground: oklch(25% 0.02 240);
+  --muted: oklch(96% 0.01 240);
+  --muted-foreground: oklch(55% 0.02 240);
+  --accent: oklch(70% 0.2 280); /* Vibrant Purple for Accent */
   --accent-foreground: oklch(98% 0 0);
-  /* White text */
-  --destructive: oklch(60% 0.25 25);
-  /* Red for errors */
+  --destructive: oklch(65% 0.25 20); /* Softer Red */
   --destructive-foreground: oklch(98% 0 0);
-  --border: oklch(90% 0 0);
-  /* Light gray borders */
-  --input: oklch(96% 0 0);
-  /* Light input background */
-  --ring: oklch(55% 0.20 250);
-  /* Blue focus ring */
-  --success: oklch(60% 0.18 145);
-  /* Green for success */
-  --warning: oklch(70% 0.20 70);
-  /* Amber for warnings */
-  --info: oklch(60% 0.18 230);
-  /* Blue for info */
-
-  /* Chart colors - professional palette */
-  --chart-1: oklch(55% 0.20 250);
-  --chart-2: oklch(60% 0.18 145);
-  --chart-3: oklch(70% 0.20 70);
-  --chart-4: oklch(60% 0.25 25);
-  --chart-5: oklch(50% 0.15 280);
-
-  --radius: 0.75rem;
-
-  /* Sidebar */
-  --sidebar: oklch(98% 0 0);
-  --sidebar-foreground: oklch(20% 0 0);
-  --sidebar-primary: oklch(55% 0.20 250);
-  --sidebar-primary-foreground: oklch(98% 0 0);
-  --sidebar-accent: oklch(92% 0 0);
-  --sidebar-accent-foreground: oklch(20% 0 0);
-  --sidebar-border: oklch(90% 0 0);
-  --sidebar-ring: oklch(55% 0.20 250);
+  --border: oklch(90% 0.01 240);
+  --input: oklch(96% 0.01 240);
+  --ring: oklch(58% 0.22 255);
+  --success: oklch(65% 0.2 150); /* Teal for Success */
+  --warning: oklch(75% 0.2 80); /* Amber for Warnings */
+  --info: oklch(70% 0.18 230);
 }
 
 .dark {
-  /* Dark mode - Professional with minimal colors */
-  --background: oklch(15% 0 0);
-  /* Dark background */
-  --foreground: oklch(95% 0 0);
-  /* Light text */
-  --card: oklch(18% 0 0);
-  /* Slightly elevated cards */
-  --card-foreground: oklch(95% 0 0);
-  --popover: oklch(18% 0 0);
-  --popover-foreground: oklch(95% 0 0);
-  --primary: oklch(60% 0.20 250);
-  /* Blue accent */
-  --primary-foreground: oklch(95% 0 0);
-  --secondary: oklch(25% 0 0);
-  /* Dark gray */
-  --secondary-foreground: oklch(95% 0 0);
-  --muted: oklch(22% 0 0);
-  /* Muted dark */
-  --muted-foreground: oklch(65% 0 0);
-  /* Medium gray text */
-  --accent: oklch(60% 0.20 250);
-  /* Blue accent */
-  --accent-foreground: oklch(95% 0 0);
-  --destructive: oklch(65% 0.25 25);
-  /* Red */
-  --destructive-foreground: oklch(95% 0 0);
-  --border: oklch(30% 0 0);
-  /* Dark borders */
-  --input: oklch(22% 0 0);
-  /* Dark input */
-  --ring: oklch(60% 0.20 250);
-  --success: oklch(65% 0.18 145);
-  --warning: oklch(75% 0.20 70);
-  --info: oklch(65% 0.18 230);
-
-  /* Chart colors for dark mode */
-  --chart-1: oklch(60% 0.20 250);
-  --chart-2: oklch(65% 0.18 145);
-  --chart-3: oklch(75% 0.20 70);
-  --chart-4: oklch(65% 0.25 25);
-  --chart-5: oklch(55% 0.15 280);
-
-  /* Sidebar dark */
-  --sidebar: oklch(15% 0 0);
-  --sidebar-foreground: oklch(95% 0 0);
-  --sidebar-primary: oklch(60% 0.20 250);
-  --sidebar-primary-foreground: oklch(95% 0 0);
-  --sidebar-accent: oklch(25% 0 0);
-  --sidebar-accent-foreground: oklch(95% 0 0);
-  --sidebar-border: oklch(30% 0 0);
-  --sidebar-ring: oklch(60% 0.20 250);
+  /* Enhanced Dark Mode Palette */
+  --background: oklch(12% 0.03 250);       /* Deep Navy Blue */
+  --foreground: oklch(95% 0.01 240);      /* Soft Off-White */
+  --card: oklch(18% 0.03 250);            /* Lighter Navy/Charcoal */
+  --card-foreground: oklch(95% 0.01 240);
+  --popover: oklch(15% 0.03 250);
+  --popover-foreground: oklch(95% 0.01 240);
+  --primary: oklch(68% 0.25 260);         /* Electric Blue */
+  --primary-foreground: oklch(98% 0 0);
+  --secondary: oklch(22% 0.03 250);
+  --secondary-foreground: oklch(92% 0.01 240);
+  --muted: oklch(20% 0.03 250);
+  --muted-foreground: oklch(65% 0.02 240);
+  --accent: oklch(72% 0.25 300);          /* Vibrant Magenta */
+  --accent-foreground: oklch(98% 0 0);
+  --destructive: oklch(68% 0.26 25);      /* Brighter Red */
+  --destructive-foreground: oklch(98% 0 0);
+  --border: oklch(28% 0.03 250);          /* Subtle Lighter Navy */
+  --input: oklch(20% 0.03 250);
+  --ring: oklch(68% 0.25 260);
+  --success: oklch(72% 0.22 155);         /* Vibrant Teal */
+  --warning: oklch(82% 0.22 85);          /* Vivid Amber */
+  --info: oklch(78% 0.2 230);
 }
-
 /* Removed gradient utilities for cleaner design */
 
 /* Additional utility classes for better color usage */
@@ -364,6 +297,14 @@
     animation: float 6s ease-in-out infinite;
   }
 
+  .card-glow:hover {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3), 0 0 40px hsl(var(--accent) / 0.2);
+  }
+
+  .aurora-text {
+      animation: aurora-text 4s ease-in-out infinite;
+  }
+
 
   @keyframes fadeIn {
     from {
@@ -434,6 +375,15 @@
     }
     50% {
       background-position: 100% 50%;
+    }
+  }
+  
+  @keyframes aurora-text {
+    0%, 100% {
+      text-shadow: 0 0 5px hsl(var(--primary) / 0.5), 0 0 10px hsl(var(--primary) / 0.4);
+    }
+    50% {
+      text-shadow: 0 0 5px hsl(var(--accent) / 0.5), 0 0 10px hsl(var(--accent) / 0.4);
     }
   }
 
@@ -619,3 +569,4 @@
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 }
+

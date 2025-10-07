@@ -15,6 +15,7 @@ const Home = React.lazy(() => import("./pages/home/home"));
 const CreateCase = React.lazy(() => import("./components/Case/CaseForm"));
 const ChatbotPage = React.lazy(() => import("./components/chatbot/chatbot"));
 const ReplaySimulation = React.lazy(() => import("./components/simulation/ReplaySimulation"));
+const LiveSimulation = React.lazy(() => import("./components/simulation/LiveSimulation"));
 const ReviewScreen = React.lazy(() => import("./components/simulation/ReviewScreen"));
 const ProfilePage = React.lazy(() => import("./components/homepageComponents/profile"));
 const LoginPage = React.lazy(() => import("./pages/forms/login"));
@@ -172,6 +173,32 @@ function AnimatedRoutes() {
                 <PageTransition>
                   <ReplaySimulation caseId={location.pathname.split("/")[2]}
                   />
+                </PageTransition>
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/simulation/start/:caseId"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary fallbackMessage="Failed to load live simulation">
+                <PageTransition>
+                  <LiveSimulation caseId={location.pathname.split("/")[3]} />
+                </PageTransition>
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/simulation/replay/:caseId"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary fallbackMessage="Failed to load simulation replay">
+                <PageTransition>
+                  <ReplaySimulation caseId={location.pathname.split("/")[3]} />
                 </PageTransition>
               </ErrorBoundary>
             </ProtectedRoute>

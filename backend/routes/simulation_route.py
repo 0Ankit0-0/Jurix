@@ -553,11 +553,22 @@ def get_simulation_report(case_id: str):
         if not report_path or not os.path.exists(report_path):
             return jsonify({"error": "Report not found"}), 404
             
+        # Determine mimetype and filename based on file extension
+        if report_path.endswith('.pdf'):
+            mimetype = 'application/pdf'
+            filename = f"simulation_report_{case_id}.pdf"
+        elif report_path.endswith('.txt'):
+            mimetype = 'text/plain'
+            filename = f"simulation_report_{case_id}.txt"
+        else:
+            mimetype = 'application/octet-stream'
+            filename = f"simulation_report_{case_id}"
+
         return send_file(
             report_path,
-            mimetype='application/pdf',
+            mimetype=mimetype,
             as_attachment=True,
-            download_name=f"simulation_report_{case_id}.pdf"
+            download_name=filename
         )
     except Exception as e:
         print(f"❌ Error getting simulation report: {e}")
