@@ -1,0 +1,41 @@
+[
+    {
+        "id": 1,
+        "title": "Corporate Fraud Investigation",
+        "description": "A complex case involving financial misconduct and securities fraud in a major corporation.",
+        "type": "Criminal Law",
+        "difficulty": 4,
+        "likes": 45,
+        "comments": 12,
+        "publishedBy": "Sarah Johnson",
+        "publisherRole": "Senior Attorney",
+        "publisherAvatar": "/professional-woman-lawyer.png",
+        "created_at": "2024-01-15"
+    },
+    {
+        "id": 2,
+        "title": "Contract Dispute Resolution",
+        "description": "A commercial contract dispute involving breach of terms and damages calculation.",
+        "type": "Contract Law",
+        "difficulty": 3,
+        "likes": 32,
+        "comments": 8,
+        "publishedBy": "Michael Chen",
+        "publisherRole": "Contract Specialist",
+        "publisherAvatar": "/professional-lawyer.png",
+        "created_at": "2024-01-20"
+    },
+    {
+        "id": 3,
+        "title": "Intellectual Property Theft",
+        "description": "A case involving stolen trade secrets and patent infringement in the tech industry.",
+        "type": "IP Law",
+        "difficulty": 5,
+        "likes": 67,
+        "comments": 23,
+        "publishedBy": "Dr. Emily Rodriguez",
+        "publisherRole": "IP Law Professor",
+        "publisherAvatar": "/professional-woman-professor.png",
+        "created_at": "2024-02-01"
+    }
+]

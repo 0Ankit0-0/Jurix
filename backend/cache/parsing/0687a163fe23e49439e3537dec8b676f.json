@@ -1,0 +1,16 @@
+{
+  "text": "\n--- Page 1 Text ---\nCOURT FILING - MOTION TO SUPPRESS\nCase No: 2024-CR-001234\nCourt: Superior Court of California\nJudge: Hon. Patricia Williams\nMOTION TO SUPPRESS EVIDENCE\nTO THE HONORABLE COURT:\nDefendant, through undersigned counsel, respectfully moves this Court \nfor an order suppressing all evidence obtained as a result of the \nunlawful search and seizure conducted on March 15, 2024.\nSTATEMENT OF FACTS:\n1. On March 15, 2024, defendant was stopped without reasonable suspicion\n2. The search was conducted without a warrant or consent\n3. The evidence obtained violates the Fourth Amendment\nLEGAL ARGUMENT:\nThe search violated defendant's constitutional rights under the Fourth \nAmendment to the United States Constitution and Article I, Section 13 \nof the California Constitution.\nCONCLUSION:\nFor the foregoing reasons, defendant respectfully requests that this \nCourt grant the motion to suppress all evidence obtained from the \nunlawful search.\nRespectfully submitted,\n_________________________\nAttorney for Defendant\nState Bar No. 123456\n",
+  "text_only": "\n--- Page 1 Text ---\nCOURT FILING - MOTION TO SUPPRESS\nCase No: 2024-CR-001234\nCourt: Superior Court of California\nJudge: Hon. Patricia Williams\nMOTION TO SUPPRESS EVIDENCE\nTO THE HONORABLE COURT:\nDefendant, through undersigned counsel, respectfully moves this Court \nfor an order suppressing all evidence obtained as a result of the \nunlawful search and seizure conducted on March 15, 2024.\nSTATEMENT OF FACTS:\n1. On March 15, 2024, defendant was stopped without reasonable suspicion\n2. The search was conducted without a warrant or consent\n3. The evidence obtained violates the Fourth Amendment\nLEGAL ARGUMENT:\nThe search violated defendant's constitutional rights under the Fourth \nAmendment to the United States Constitution and Article I, Section 13 \nof the California Constitution.\nCONCLUSION:\nFor the foregoing reasons, defendant respectfully requests that this \nCourt grant the motion to suppress all evidence obtained from the \nunlawful search.\nRespectfully submitted,\n_________________________\nAttorney for Defendant\nState Bar No. 123456\n",
+  "ocr_content": "",
+  "word_count": 151,
+  "char_count": 1048,
+  "pages": 1,
+  "images_processed": 0,
+  "extraction_method": "pymupdf_with_ocr",
+  "file_path": "/workspaces/Simulation/test_files/motion_to_suppress.pdf",
+  "file_name": "motion_to_suppress.pdf",
+  "file_size": 1480,
+  "file_extension": ".pdf",
+  "processed_at": "2025-09-27T12:43:14.055195",
+  "file_hash": "0687a163fe23e49439e3537dec8b676f"
+}

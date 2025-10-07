@@ -1,0 +1,17 @@
+{
+  "text": "EVIDENCE DOCUMENT #001 WITNESS STATEMENT Date: March 20, 2024 Case: State vs. Johnson Mary Wilson, hereby state that: 1 witnessed the defendant at the scene 2 The time was approximately 3:30 PM 3 The defendant was carrying a red Signature: Wilson Notarized: March 20, 2024 bag Mary",
+  "word_count": 47,
+  "char_count": 281,
+  "image_size": [
+    800,
+    600
+  ],
+  "image_mode": "RGB",
+  "extraction_method": "easyocr",
+  "file_path": "/workspaces/Simulation/test_files/witness_statement.png",
+  "file_name": "witness_statement.png",
+  "file_size": 39884,
+  "file_extension": ".png",
+  "processed_at": "2025-09-27T12:43:08.031420",
+  "file_hash": "a3ae015a37083993063b1ac683efbc06"
+}

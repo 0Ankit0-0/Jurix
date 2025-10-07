@@ -1,0 +1,140 @@
+# ============================================================
+# 📦 Node / React Frontend
+# ============================================================
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Environment files
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.production.local
+frontend/.env.test.local
+
+# Build artifacts
+frontend/build/
+frontend/.vite/
+frontend/.next/
+frontend/out/
+
+# ============================================================
+# 🐍 Python / Flask Backend
+# ============================================================
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment folders
+venv/
+.env/
+env/
+.venv/
+backend/.env
+backend/.env.local
+backend/.flaskenv
+
+# Data & runtime folders
+backend/uploads/
+backend/uploaded_evidence/
+backend/__pycache__/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/.coverage
+backend/.ruff_cache/
+backend/.idea/
+
+# Logs & temp files
+backend/*.log
+backend/logs/
+backend/tmp/
+backend/data/*.bak
+
+# ============================================================
+# 🧠 AI / Ollama / Models
+# ============================================================
+# Local Ollama / LLM files
+/Ollama/
+ollama/
+ollama_models/
+ai_agents/__pycache__/
+/ai_agents/__pycache__/
+/ai_agents/training/__pycache__/
+ai_agents/logs/
+ai_agents/checkpoints/
+ai_agents/saved_models/
+ai_agents/output/
+ai_agents/cache/
+*.pt
+*.pth
+*.bin
+*.ckpt
+
+# ============================================================
+# 🧰 Development Tools & IDEs
+# ============================================================
+# VSCode
+.vscode/*
+!.vscode/extensions.json
+
+# PyCharm / JetBrains
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Mac & Windows
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Visual Studio
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ============================================================
+# 🧪 Misc / Test / Backup
+# ============================================================
+# Coverage reports
+coverage/
+.tox/
+.nox/
+
+# Temporary and backup files
+*.tmp
+*.bak
+*.old
+*.orig
+
+# Output and exports
+/export/
+reports/
+outputs/
+__output__/
+__tests__/
+
+# ============================================================
+# 🔒 Environment & Secrets
+# ============================================================
+.env
+.env.*
+*.pem
+*.key
+*.crt
+secrets.json
+config.json

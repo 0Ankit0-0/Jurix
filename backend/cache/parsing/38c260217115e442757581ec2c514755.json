@@ -1,0 +1,14 @@
+{
+  "text": "LEGAL CASE SUMMARY\nCase Information\nCase Number: 2024-CR-001234\nCase Title: People vs. Robert Johnson\nCharge: Theft in the Second Degree\nEvidence List\n1. Security camera footage from March 15, 2024\n2. Witness testimony from store clerk\n3. Recovered stolen merchandise\n4. Defendant's confession statement\nCase Timeline\nMarch 15, 2024 - Incident occurred\nMarch 16, 2024 - Defendant arrested\nMarch 20, 2024 - Charges filed\nApril 1, 2024 - Court date scheduled\n\nTABLES:\nEvidence ID | Type | Status\nE001 | Video | Processed\nE002 | Testimony | Recorded\nE003 | Physical | In custody",
+  "word_count": 94,
+  "char_count": 575,
+  "paragraphs": 15,
+  "tables": 1,
+  "extraction_method": "python_docx",
+  "file_path": "/workspaces/Simulation/test_files/case_summary.docx",
+  "file_name": "case_summary.docx",
+  "file_size": 37113,
+  "file_extension": ".docx",
+  "processed_at": "2025-09-27T12:43:14.044765",
+  "file_hash": "38c260217115e442757581ec2c514755"
+}

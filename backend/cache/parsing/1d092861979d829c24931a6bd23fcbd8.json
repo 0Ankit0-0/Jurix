@@ -1,0 +1,13 @@
+{
+  "text": "LEGAL DOCUMENT - CONTRACT AGREEMENT\n\nThis is a sample legal contract between Party A and Party B.\n\nTERMS AND CONDITIONS:\n1. Party A agrees to provide services as described herein\n2. Party B agrees to pay the sum of $10,000 upon completion\n3. This contract is valid from January 1, 2024 to December 31, 2024\n\nSIGNATURES:\nParty A: John Smith\nParty B: Jane Doe\nDate: March 15, 2024\n\nThis document contains 67 words for testing purposes.\n",
+  "word_count": 76,
+  "char_count": 434,
+  "pages": 1,
+  "extraction_method": "text_file",
+  "file_path": "/workspaces/Simulation/test_files/sample_contract.txt",
+  "file_name": "sample_contract.txt",
+  "file_size": 434,
+  "file_extension": ".txt",
+  "processed_at": "2025-09-27T12:43:14.093974",
+  "file_hash": "1d092861979d829c24931a6bd23fcbd8"
+}

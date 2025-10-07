@@ -1,0 +1,13 @@
+{
+  "text": "\nWITNESS STATEMENT\n\nDate: January 16, 2025\nCase: State vs. Johnson\nWitness: Sarah Martinez, IT Manager\n\nI, Sarah Martinez, hereby provide the following statement:\n\n1. BACKGROUND\n   I am the IT Manager at TechCorp Industries and have been employed \n   here for 5 years. I was responsible for managing company equipment\n   and access controls.\n\n2. LAPTOP ASSIGNMENT\n   On June 1, 2024, I personally issued laptop serial #TC-2024-0156\n   to Michael Johnson. This was a company-owned Dell Latitude 5420.\n   He signed the equipment acknowledgment form (attached).\n\n3. ACCESS PRIVILEGES\n   Mr. Johnson had standard employee access to:\n   - Company email\n   - Shared drives (limited to his department)\n   - Project management software\n   \n   He did NOT have authorization to access:\n   - Client database\n   - Financial records\n   - Executive-level documents\n\n4. INCIDENT DISCOVERY\n   On January 15, 2025, during routine security audit, I discovered:\n   - Unusual file access patterns on January 10-12, 2025\n   - Large data downloads (approximately 2.3 GB)\n   - Access to restricted client folders\n   - Downloads occurred after business hours (11 PM - 2 AM)\n\n5. LAPTOP STATUS\n   The laptop was not returned during Mr. Johnson's exit interview\n   on January 14, 2025. When questioned, he claimed it was his\n   personal device. Our records clearly show it as company property.\n\n6. EVIDENCE PRESERVED\n   I immediately:\n   - Disabled his network access\n   - Preserved server logs\n   - Documented the unauthorized access\n   - Reported to management and legal\n\nI declare under penalty of perjury that the foregoing is true and correct.\n\nSigned: Sarah Martinez\nDate: January 16, 2025\n    ",
+  "word_count": 246,
+  "char_count": 1673,
+  "pages": 1,
+  "extraction_method": "text_file",
+  "file_path": "E:\\Simulation-main\\backend\\routes\\..\\uploaded_evidence\\6ac97d91-0b7f-44ea-abc8-53aa8834680e_20250930_124637.txt",
+  "file_name": "6ac97d91-0b7f-44ea-abc8-53aa8834680e_20250930_124637.txt",
+  "file_size": 1726,
+  "file_extension": ".txt",
+  "processed_at": "2025-09-30T07:16:46.877835",
+  "file_hash": "d2632b71825aeed54438f42a33343d16"
+}
