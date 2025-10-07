@@ -171,8 +171,7 @@ function AnimatedRoutes() {
             <ProtectedRoute>
               <ErrorBoundary fallbackMessage="Failed to load simulation replay">
                 <PageTransition>
-                  <ReplaySimulation caseId={location.pathname.split("/")[2]}
-                  />
+                  <ReplaySimulation />
                 </PageTransition>
               </ErrorBoundary>
             </ProtectedRoute>
@@ -185,7 +184,7 @@ function AnimatedRoutes() {
             <ProtectedRoute>
               <ErrorBoundary fallbackMessage="Failed to load live simulation">
                 <PageTransition>
-                  <LiveSimulation caseId={location.pathname.split("/")[3]} />
+                  <LiveSimulation />
                 </PageTransition>
               </ErrorBoundary>
             </ProtectedRoute>
@@ -198,7 +197,7 @@ function AnimatedRoutes() {
             <ProtectedRoute>
               <ErrorBoundary fallbackMessage="Failed to load simulation replay">
                 <PageTransition>
-                  <ReplaySimulation caseId={location.pathname.split("/")[3]} />
+                  <ReplaySimulation />
                 </PageTransition>
               </ErrorBoundary>
             </ProtectedRoute>

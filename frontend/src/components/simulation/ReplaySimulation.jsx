@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,9 @@ import toast from "react-hot-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import ChatQuestionInput from "./ChatQuestionInput";
 
-const ReplaySimulation = ({ caseId }) => {
+const ReplaySimulation = () => {
   const navigate = useNavigate();
+  const { caseId } = useParams();
   const [simulation, setSimulation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

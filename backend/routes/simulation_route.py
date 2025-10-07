@@ -548,11 +548,32 @@ def get_simulation_report(case_id: str):
         case = get_case_by_id(case_id)
         if not case:
             return jsonify({"error": "Case not found"}), 404
-        
-        report_path = case.get("simulation_results", {}).get("report_path")
+
+        simulation_results = case.get("simulation_results")
+        if not simulation_results:
+            return jsonify({"error": "No simulation results found"}), 404
+
+        report_path = simulation_results.get("report_path")
+
+        # If report doesn't exist, generate it on demand
         if not report_path or not os.path.exists(report_path):
-            return jsonify({"error": "Report not found"}), 404
-            
+            print(f"📋 Generating report on demand for case: {case_id}")
+            try:
+                from services.ai_services.report_generator import generate_simulation_report
+                simulation_id = simulation_results.get('simulation_id', f"SIM_{case_id}")
+                pdf_filename = f"simulation_{simulation_id}.pdf"
+                pdf_path = os.path.join(os.path.dirname(__file__), "..", "reports", pdf_filename)
+                os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+                actual_path = generate_simulation_report(case, simulation_results, pdf_path)
+
+                # Update the case with the new report path
+                update_case(case_id, {"report_path": actual_path})
+
+                report_path = actual_path
+            except Exception as e:
+                print(f"❌ Failed to generate report on demand: {e}")
+                return jsonify({"error": "Failed to generate report"}), 500
+
         # Determine mimetype and filename based on file extension
         if report_path.endswith('.pdf'):
             mimetype = 'application/pdf'

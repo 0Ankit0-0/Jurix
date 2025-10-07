@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,17 +10,25 @@ import toast from "react-hot-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import ChatQuestionInput from "./ChatQuestionInput";
 
-const LiveSimulation = ({ caseId }) => {
+const LiveSimulation = () => {
   const navigate = useNavigate();
+  const { caseId } = useParams();
   const [simulation, setSimulation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentTurn, setCurrentTurn] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true); // Auto-play for live
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [showChat, setShowChat] = useState(false);
+  const [showChat, setShowChat] = useState(true);
   const [chatAnswers, setChatAnswers] = useState([]);
   const [isSimulating, setIsSimulating] = useState(true); // Check if still running
+
+  // Check for invalid caseId
+  if (!caseId || caseId === "undefined") {
+    toast.error("Invalid case ID. Redirecting to dashboard.");
+    navigate("/dashboard");
+    return null;
+  }
 
   useEffect(() => {
     const checkStatusAndFetch = async () => {
@@ -160,6 +168,47 @@ const LiveSimulation = ({ caseId }) => {
           </Button>
         </div>
 
+        {/* Ask Questions Section - Moved to top */}
+        <div className="mb-8">
+          <Button
+            onClick={() => setShowChat(!showChat)}
+            variant="outline"
+            className="w-full mb-4"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            {showChat ? "Hide Questions" : "Ask Questions About This Case"}
+          </Button>
+
+          {showChat && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="text-lg">Ask Questions</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Ask questions about the case, evidence, AI arguments, or legal provisions. Get instant AI-powered answers.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Chat Answers */}
+                {chatAnswers.length > 0 && (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {chatAnswers.map((answer, index) => (
+                      <div key={index} className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-foreground">{answer}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Question Input */}
+                <ChatQuestionInput
+                  caseId={caseId}
+                  onAnswer={(answer) => setChatAnswers(prev => [...prev, answer])}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
         {/* Controls */}
         <div className="flex items-center gap-4 mb-6">
           <Button onClick={handlePlayPause} variant="outline">
@@ -200,17 +249,15 @@ const LiveSimulation = ({ caseId }) => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-foreground leading-relaxed">{turn.message}</p>
                   {turn.thinking_process && (
-                    <details className="mt-4">
-                      <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
-                        Show thinking process
-                      </summary>
-                      <p className="text-sm text-muted-foreground mt-2 p-3 bg-muted rounded-md">
+                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                      <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">Thinking Process:</p>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
                         {turn.thinking_process}
                       </p>
-                    </details>
+                    </div>
                   )}
+                  <p className="text-foreground leading-relaxed">{turn.message}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -227,47 +274,6 @@ const LiveSimulation = ({ caseId }) => {
               </pre>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Ask Questions Section */}
-        <div className="mt-12">
-          <Button
-            onClick={() => setShowChat(!showChat)}
-            variant="outline"
-            className="w-full mb-4"
-          >
-            <MessageCircle className="h-4 w-4 mr-2" />
-            {showChat ? "Hide Questions" : "Ask Questions About This Case"}
-          </Button>
-
-          {showChat && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Ask Questions</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Ask questions about the case, evidence, AI arguments, or legal provisions. Get instant AI-powered answers.
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Chat Answers */}
-                {chatAnswers.length > 0 && (
-                  <div className="space-y-3 max-h-96 overflow-y-auto">
-                    {chatAnswers.map((answer, index) => (
-                      <div key={index} className="p-3 bg-muted rounded-lg">
-                        <p className="text-sm text-foreground">{answer}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Question Input */}
-                <ChatQuestionInput
-                  caseId={caseId}
-                  onAnswer={(answer) => setChatAnswers(prev => [...prev, answer])}
-                />
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
     </div>
