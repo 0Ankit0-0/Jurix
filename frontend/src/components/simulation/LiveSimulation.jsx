@@ -23,14 +23,14 @@ const LiveSimulation = () => {
   const [chatAnswers, setChatAnswers] = useState([]);
   const [isSimulating, setIsSimulating] = useState(true); // Check if still running
 
-  // Check for invalid caseId
-  if (!caseId || caseId === "undefined") {
-    toast.error("Invalid case ID. Redirecting to dashboard.");
-    navigate("/dashboard");
-    return null;
-  }
-
   useEffect(() => {
+    // Check for invalid caseId
+    if (!caseId || caseId === "undefined") {
+      toast.error("Invalid case ID. Redirecting to dashboard.");
+      navigate("/dashboard");
+      return;
+    }
+
     const checkStatusAndFetch = async () => {
       try {
         // First check status
@@ -55,7 +55,7 @@ const LiveSimulation = () => {
     };
 
     checkStatusAndFetch();
-  }, [caseId]);
+  }, [caseId, navigate]);
 
   const handleDownloadReport = async () => {
     try {
