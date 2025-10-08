@@ -20,11 +20,11 @@ const isDevelopment =
 
 // Log environment info only in development
 if (isDevelopment) {
-  console.log('🔧 Jurix Development Mode')
+  console.log('🔧 JURIX Development Mode')
   console.log('📊 Environment Variables:')
   console.log('  - VITE_GOOGLE_CLIENT_ID:', GOOGLE_CLIENT_ID ? '✅ Set' : '❌ Missing')
   console.log('  - VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL || 'Using default')
-  console.log('  - VITE_APP_NAME:', import.meta.env.VITE_APP_NAME || 'Jurix')
+  console.log('  - VITE_APP_NAME:', import.meta.env.VITE_APP_NAME || 'JURIX')
 }
 
 createRoot(document.getElementById('root')).render(

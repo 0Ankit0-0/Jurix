@@ -308,8 +308,24 @@ def start_courtroom_simulation(case_id: str):
                 400,
             )
 
+        # Initialize progress tracking
+        update_case(case_id, {
+            "simulation_results": {
+                "status": "processing",
+                "progress": 0,
+                "step": 0
+            }
+        })
+
         # Step 1: analyze evidence (if any)
         print("🔍 Step 1/4: Analyzing evidence files...")
+        update_case(case_id, {
+            "simulation_results": {
+                "status": "processing",
+                "progress": 10,
+                "step": 0
+            }
+        })
         evidence_analysis = []
         try:
             if case.get('has_evidence', False):  # Check if case was created with evidence flag
@@ -317,18 +333,27 @@ def start_courtroom_simulation(case_id: str):
                 if isinstance(evidence_analysis, str):
                     if "No evidence files found" in evidence_analysis:
                         print("ℹ️ No evidence files to analyze")
+                        evidence_analysis = []  # Set to empty list for no evidence
                     else:
                         return jsonify({"error": evidence_analysis}), 400
                 else:
                     print(f"📊 Found {len(evidence_analysis)} evidence files to analyze")
             else:
                 print("ℹ️ Case marked as no evidence required")
+                evidence_analysis = []  # Ensure it's an empty list
         except Exception as e:
             print(f"❌ Evidence analysis failed: {e}")
             return jsonify({"error": f"Failed to analyze evidence: {str(e)}"}), 500
 
         # Step 2: Try local agent simulation first
         print("🤖 Step 2/4: Running AI agent simulation...")
+        update_case(case_id, {
+            "simulation_results": {
+                "status": "processing",
+                "progress": 40,
+                "step": 1 if evidence_analysis else 0
+            }
+        })
         try:
             sim_out = run_agent_simulation(case, evidence_analysis)
             simulation_type = sim_out.get("meta", {}).get("provider", "local_agents")
@@ -349,12 +374,30 @@ def start_courtroom_simulation(case_id: str):
                 simulation_type = "static_fallback"
                 print("✅ Static simulation generated")
 
+        # Update progress before final processing
+        update_case(case_id, {
+            "simulation_results": {
+                "status": "processing",
+                "progress": 70,
+                "step": 2 if evidence_analysis else 1
+            }
+        })
+
         # Step 4: Save simulation results into the case
         simulation_id = f"SIM_{case_id}_{int(datetime.utcnow().timestamp())}"
         transcript = sim_out.get("transcript")
         
         # Parse transcript into turn-by-turn format for replay
         turns = parse_simulation_into_turns(transcript)
+        
+        # Update progress
+        update_case(case_id, {
+            "simulation_results": {
+                "status": "processing",
+                "progress": 85,
+                "step": 3 if evidence_analysis else 2
+            }
+        })
         
         # Generate PDF report
         from services.ai_services.report_generator import generate_simulation_report

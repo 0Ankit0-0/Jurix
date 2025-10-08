@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { caseAPI } from "@/services/api";
+import { caseAPI, simulationAPI } from "@/services/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { EmptyState, EmptySearchState } from "@/components/ui/empty-state";
@@ -12,6 +12,8 @@ import { SkeletonDashboard } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
+import CaseUploadBackground from "@/components/ui/CaseUploadBackground";
+
 import {
   FileText,
   User,
@@ -95,17 +97,17 @@ export default function Dashboard({ userName }) {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       // Use correct method name and normalize user ID
       const userId = user._id || user.id;
       const [myCasesResponse, publicCasesResponse] = await Promise.all([
         caseAPI.getMyCases(userId),
         caseAPI.getPublicCases()
       ]);
-      
+
       setMyCases(myCasesResponse.data.cases || []);
       setPublicCases(publicCasesResponse.data.cases || []);
-      
+
     } catch (error) {
       console.error("Error loading cases:", error);
       setError(error.message || "Failed to load cases");
@@ -141,7 +143,7 @@ export default function Dashboard({ userName }) {
         toast.error("User not authenticated");
         return;
       }
-      
+
       if (currentStatus) {
         await caseAPI.unpublish(caseId, userId);
         toast.success("Case is now private");
@@ -149,7 +151,7 @@ export default function Dashboard({ userName }) {
         await caseAPI.publish(caseId, userId);
         toast.success("Case published successfully");
       }
-      
+
       // Reload both my cases and public cases
       await loadMyCases();
     } catch (error) {
@@ -160,7 +162,7 @@ export default function Dashboard({ userName }) {
 
   useEffect(() => {
     const casesToFilter = activeTab === "my-cases" ? myCases : publicCases
-    
+
     let filtered = casesToFilter.filter((caseItem) => {
       const matchesSearch =
         caseItem.title?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
@@ -223,22 +225,19 @@ export default function Dashboard({ userName }) {
 
   const handleStartSimulation = async (caseId) => {
     try {
-      const actualId = typeof caseId === 'object' && caseId.$oid ? caseId.$oid : caseId;
-      
-      // First get the case details to check if it has simulation results
-      const response = await caseAPI.getById(actualId);
-      const caseData = response.data;
+      const response = await caseAPI.getById(caseId);
+      const caseData = response.data.case; // Corrected line
 
-      // If the case already has simulation results, redirect to replay
       if (caseData.simulation_results) {
         navigate(`/simulation/replay/${caseData.case_id}`);
         return;
       }
 
-      // Otherwise start a new simulation
-      if (activeTab === "public-cases") {
-        await caseAPI.simulatePublicCase(actualId);
-      }
+      // Start the simulation for all cases (private and public)
+      toast.loading("Starting simulation...", { id: 'sim' });
+      await simulationAPI.start(caseId);
+      toast.success("Simulation started! Redirecting...", { id: 'sim' });
+
       navigate(`/simulation/start/${caseData.case_id}`);
     } catch (error) {
       console.error("Error starting simulation:", error);
@@ -248,11 +247,8 @@ export default function Dashboard({ userName }) {
 
   const handleReplaySimulation = async (caseId) => {
     try {
-      const actualId = typeof caseId === 'object' && caseId.$oid ? caseId.$oid : caseId;
-      
-      // First check if the case has simulation results
-      const response = await caseAPI.getById(actualId);
-      const caseData = response.data;
+      const response = await caseAPI.getById(caseId);
+      const caseData = response.data.case; // Corrected line
 
       if (!caseData.simulation_results) {
         toast.error("No simulation results available for replay");
@@ -268,35 +264,28 @@ export default function Dashboard({ userName }) {
 
   const handleDownload = async (caseId) => {
     try {
-      const actualId = typeof caseId === 'object' && caseId.$oid ? caseId.$oid : caseId;
-      
-      // Get the case data including simulation results
-      const response = await caseAPI.getById(actualId);
-      const caseData = response.data;
-      
-      // Check if the case has simulation results
+      const response = await caseAPI.getById(caseId);
+      const caseData = response.data.case; // Corrected line
+
       if (!caseData.simulation_results) {
         toast.error("No simulation results available for download");
         return;
       }
-      
-      // Use simulationAPI to get the report
-      const reportResponse = await simulationAPI.getReport(actualId);
-      
-      // Create a blob from the response
+
+      const reportResponse = await simulationAPI.getReport(caseId);
+
       const blob = new Blob([reportResponse.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
-      
-      // Create a hidden link element to trigger download
+
       const link = document.createElement("a");
       link.href = url;
       link.download = `case-${caseData.case_id}.pdf`;
-      
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success("Case report downloaded successfully");
     } catch (error) {
       console.error("Error downloading case:", error);
@@ -305,13 +294,14 @@ export default function Dashboard({ userName }) {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen relative overflow-hidden">
+      <CaseUploadBackground />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Enhanced Header */}
         <div className="flex flex-col items-center justify-center text-center mb-12">
           <h1 className="text-4xl sm:text-5xl font-heading font-extrabold text-foreground flex flex-col sm:flex-row sm:items-center sm:gap-5 mb-4">
-            <span className="bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">Welcome back, {userName}!</span>
-            <Badge className="mt-3 sm:mt-0 bg-gradient-to-r from-accent/20 to-accent/10 text-accent font-bold py-2 px-4 rounded-xl flex items-center gap-2.5 shadow-lg border-2 border-accent/30 hover:scale-105 transition-transform duration-300">
+            <span className="text-foreground">Welcome back, {userName}!</span>
+            <Badge className="mt-3 sm:mt-0 bg-accent/10 text-accent font-bold py-2 px-4 rounded-xl flex items-center gap-2.5 shadow-xl border-2 border-accent/30 hover:scale-105 transition-transform duration-300">
               <Sparkles className="h-5 w-5 fill-accent/30" />
               <span>Manage your legal cases</span>
             </Badge>
@@ -320,7 +310,7 @@ export default function Dashboard({ userName }) {
 
         {/* Enhanced Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-10">
-          <TabsList className="grid w-full max-w-lg mx-auto grid-cols-2 glass-card p-1.5 shadow-xl border-2 border-border/50">
+          <TabsList className="grid w-full max-w-lg mx-auto grid-cols-2 glass-card p-1.5 shadow-2xl border-2 border-border/50">
             <TabsTrigger value="my-cases" className="gap-2.5 py-3 rounded-lg font-semibold data-[state=active]:shadow-lg transition-all duration-300">
               <User className="h-5 w-5" />
               My Cases
@@ -343,7 +333,7 @@ export default function Dashboard({ userName }) {
                 placeholder="Search cases by title, description, or type..."
                 showShortcut={true}
                 onClear={handleClearSearch}
-                className="shadow-xl"
+                className="shadow-2xl"
               />
             </div>
           </div>
@@ -359,8 +349,8 @@ export default function Dashboard({ userName }) {
                   size="sm"
                   onClick={() => setSelectedType(type)}
                   className={`transition-all duration-300 hover-lift ${selectedType === type
-                      ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg"
-                      : "glass-card border-border/50 hover:border-primary/50"
+                    ? "bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-2xl"
+                    : "glass-card border-border/50 hover:border-primary/50 shadow-lg"
                     }`}
                 >
                   {type}
@@ -387,7 +377,7 @@ export default function Dashboard({ userName }) {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none px-5 py-2.5 pr-10 glass-card border-2 border-border/50 rounded-xl bg-transparent text-foreground text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 cursor-pointer shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="appearance-none px-5 py-2.5 pr-10 glass-card border-2 border-border/50 rounded-xl bg-transparent text-foreground text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 cursor-pointer shadow-xl hover:shadow-2xl transition-all duration-300"
                 >
                   {SORT_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value} className="bg-background">
@@ -399,7 +389,7 @@ export default function Dashboard({ userName }) {
               </div>
 
               {/* Enhanced View Mode Toggle */}
-              <div className="flex glass-card rounded-xl overflow-hidden border-2 border-border/50 shadow-lg">
+              <div className="flex glass-card rounded-xl overflow-hidden border-2 border-border/50 shadow-xl">
                 <Button
                   variant={viewMode === "grid" ? "default" : "ghost"}
                   size="sm"
@@ -422,7 +412,7 @@ export default function Dashboard({ userName }) {
 
           {/* Mobile Filters */}
           {showFilters && (
-            <div className="lg:hidden glass-card rounded-2xl p-6 animate-slide-up">
+            <div className="lg:hidden glass-card rounded-2xl p-6 animate-slide-up shadow-2xl">
               <h3 className="font-semibold text-foreground mb-4">Filter by Case Type</h3>
               <div className="flex flex-wrap gap-2">
                 {CASE_TYPES.map((type) => (
@@ -432,8 +422,8 @@ export default function Dashboard({ userName }) {
                     size="sm"
                     onClick={() => setSelectedType(type)}
                     className={`transition-all duration-300 ${selectedType === type
-                        ? "bg-gradient-to-r from-primary to-accent text-primary-foreground"
-                        : "border-border/50 hover:border-primary/50"
+                      ? "bg-gradient-to-r from-primary to-accent text-primary-foreground"
+                      : "border-border/50 hover:border-primary/50"
                       }`}
                   >
                     {type}
@@ -446,7 +436,7 @@ export default function Dashboard({ userName }) {
 
         {/* Enhanced Results Summary */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
-          <div className="flex items-center gap-3 glass-card px-5 py-3 rounded-xl border-2 border-border/50 shadow-lg">
+          <div className="flex items-center gap-3 glass-card px-5 py-3 rounded-xl border-2 border-border/50 shadow-xl">
             <TrendingUp className="h-6 w-6 text-accent fill-accent/20" />
             <p className="text-foreground font-bold text-lg">
               {filteredCases.length} case{filteredCases.length !== 1 ? 's' : ''} found
@@ -492,7 +482,7 @@ export default function Dashboard({ userName }) {
               const caseId = caseItem._id || caseItem.id;
               // Extract MongoDB _id and convert case_id to ID if needed
               const actualId = caseItem._id.$oid || caseItem._id || caseId;
-              
+
               const formattedCase = {
                 ...caseItem,
                 id: actualId,
@@ -535,8 +525,8 @@ export default function Dashboard({ userName }) {
                   className={`animate-fade-in hover-lift ${viewMode === "list" ? "max-w-4xl mx-auto" : ""}`}
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <CaseCard 
-                    caseData={formattedCase} 
+                  <CaseCard
+                    caseData={formattedCase}
                     showPublicToggle={activeTab === "my-cases"}
                   />
                 </div>

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+3:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -16,8 +16,8 @@
 
 @theme {
   /* Fonts */
-  --font-heading: "Playfair Display", serif;
-  --font-body: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", "Helvetica Neue", sans-serif;
+  --font-heading: "Inter", "Poppins", system-ui, -apple-system, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, "Noto Sans", "Liberation Sans", "Helvetica Neue", sans-serif;
 
   /* Colors (light defaults) */
   --color-foreground: #111111;
@@ -169,11 +169,38 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  }
+
+  /* Ensure full viewport coverage without gaps */
+  html {
+    @apply bg-background;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    transition: background-color 0.3s ease;
   }
 
   body {
-    @apply bg-background text-foreground font-body antialiased;
+    @apply bg-background bg-grid-pattern text-foreground font-body antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  #root {
+    @apply bg-background bg-grid-pattern;
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  canvas {
+    transition: opacity 0.3s ease;
   }
 
   /* Typography hierarchy */
@@ -452,6 +479,116 @@
     background: hsl(var(--muted-foreground) / 0.3);
     border-radius: 2px;
   }
+
+  /* Enhanced Toast Notifications */
+  .Toaster {
+    z-index: 9999;
+  }
+
+  .Toaster > div {
+    animation: toast-slide-in 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes toast-slide-in {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Custom toast styles */
+  [data-sonner-toast] {
+    background: hsl(var(--card)) !important;
+    border: 2px solid hsl(var(--border)) !important;
+    box-shadow: 0 10px 40px -10px hsl(var(--foreground) / 0.2) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 12px !important;
+    padding: 16px !important;
+  }
+
+  [data-sonner-toast][data-type="success"] {
+    border-color: hsl(var(--success) / 0.5) !important;
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--success) / 0.05)) !important;
+  }
+
+  [data-sonner-toast][data-type="error"] {
+    border-color: hsl(var(--destructive) / 0.5) !important;
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--destructive) / 0.05)) !important;
+  }
+
+  [data-sonner-toast][data-type="loading"] {
+    border-color: hsl(var(--primary) / 0.5) !important;
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--primary) / 0.05)) !important;
+  }
+
+  [data-sonner-toast][data-type="info"] {
+    border-color: hsl(var(--info) / 0.5) !important;
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--info) / 0.05)) !important;
+  }
+
+  [data-sonner-toast][data-type="warning"] {
+    border-color: hsl(var(--warning) / 0.5) !important;
+    background: linear-gradient(135deg, hsl(var(--card)), hsl(var(--warning) / 0.05)) !important;
+  }
+
+  [data-sonner-toast] [data-title] {
+    color: hsl(var(--foreground)) !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+  }
+
+  [data-sonner-toast] [data-description] {
+    color: hsl(var(--muted-foreground)) !important;
+    font-size: 13px !important;
+  }
+
+  [data-sonner-toast] [data-icon] {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  [data-sonner-toast][data-type="success"] [data-icon] {
+    color: hsl(var(--success)) !important;
+  }
+
+  [data-sonner-toast][data-type="error"] [data-icon] {
+    color: hsl(var(--destructive)) !important;
+  }
+
+  [data-sonner-toast][data-type="loading"] [data-icon] {
+    color: hsl(var(--primary)) !important;
+  }
+
+  [data-sonner-toast] [data-button] {
+    background: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+    border-radius: 8px !important;
+    padding: 8px 16px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    transition: all 0.2s !important;
+  }
+
+  [data-sonner-toast] [data-button]:hover {
+    background: hsl(var(--primary) / 0.9) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  [data-sonner-toast] [data-close-button] {
+    background: hsl(var(--muted)) !important;
+    color: hsl(var(--muted-foreground)) !important;
+    border-radius: 6px !important;
+    transition: all 0.2s !important;
+  }
+
+  [data-sonner-toast] [data-close-button]:hover {
+    background: hsl(var(--muted) / 0.8) !important;
+    transform: scale(1.1) !important;
+  }
 }
 
 /* Custom utilities for better responsive design */
@@ -479,6 +616,14 @@
 
   .safe-right {
     padding-right: env(safe-area-inset-right);
+  }
+
+  /* Grid pattern background utility */
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(to right, rgba(128,128,128,0.4) 4px, transparent 4px),
+      linear-gradient(to bottom, rgba(128,128,128,0.4) 4px, transparent 4px);
+    background-size: 25px 25px;
   }
 
   /* Modern responsive text utilities */
@@ -570,3 +715,23 @@
   }
 }
 
+/* Add this to your existing index.css */
+
+.grid-background {
+  background-image: 
+    linear-gradient(rgba(200, 200, 200, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 200, 200, 0.3) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0;
+  min-height: 100vh;
+  width: 100%;
+}
+
+/* Alternative dotted grid */
+.grid-background-dots {
+  background-image: radial-gradient(circle, rgba(200, 200, 200, 0.5) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0;
+  min-height: 100vh;
+  width: 100%;
+}

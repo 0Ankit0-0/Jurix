@@ -118,47 +118,96 @@ class VisionService:
 
     def process_image(self, image_path: str, tasks: List[str] = ["caption", "layout", "scene"]) -> Dict[str, Any]:
         """Process image with advanced AI models for scene understanding and layout analysis.
-        Note: Text extraction is handled separately by the document parser's fallback chain.
-        
+
         Args:
             image_path: Path to image file
             tasks: List of analysis tasks - "caption", "layout", "scene"
-            
+
         Returns:
             Dictionary with results from scene analysis, layout understanding, and captioning
         """
         results = {}
-        image = Image.open(image_path)
-            
-        # Image Captioning
-        if "caption" in tasks:
-            self._init_caption_model()
-            if self.caption_model:
-                try:
-                    caption = self.caption_model(image_path)[0]["generated_text"]
-                    results["caption"] = caption
-                except Exception as e:
-                    logging.error(f"Caption generation failed: {e}")
-                    
-        # Layout Analysis
-        if "layout" in tasks:
-            self._init_layout_model()
-            if self.layout_model:
+
+        try:
+            image = Image.open(image_path)
+
+            # Resize image if needed for faster processing
+            if self.use_low_res:
+                image = self._resize_image(image)
+
+            # Image Captioning with BLIP-2
+            if "caption" in tasks:
+                if self._init_blip2_model():  # ✅ Initialize BLIP-2
+                    try:
+                        caption = self._generate_caption_blip2(image)
+                        results["caption"] = caption
+                        logging.info(f"✅ Caption generated: {caption[:100]}...")
+                    except Exception as e:
+                        logging.error(f"❌ Caption generation failed: {e}")
+                        results["caption"] = None
+                else:
+                    logging.warning("⚠️ BLIP-2 not available for captioning")
+                    results["caption"] = None
+
+            # Layout Analysis
+            if "layout" in tasks:
                 try:
                     layout = self._analyze_document_layout(image_path)
                     results["layout"] = layout
                 except Exception as e:
-                    logging.error(f"Layout analysis failed: {e}")
-                    
-        # Scene Analysis
-        if "scene" in tasks:
-            try:
-                scene_info = self._analyze_scene(image)
-                results["scene"] = scene_info
-            except Exception as e:
-                logging.error(f"Scene analysis failed: {e}")
-                
+                    logging.error(f"❌ Layout analysis failed: {e}")
+                    results["layout"] = None
+
+            # Scene Analysis
+            if "scene" in tasks:
+                try:
+                    scene_info = self._analyze_scene(image)
+                    results["scene"] = scene_info
+                except Exception as e:
+                    logging.error(f"❌ Scene analysis failed: {e}")
+                    results["scene"] = None
+
+        except Exception as e:
+            logging.error(f"❌ Image processing failed: {e}")
+
         return results
+
+    def _resize_image(self, image: Image.Image) -> Image.Image:
+        """Resize image to max_image_size while maintaining aspect ratio"""
+        width, height = image.size
+        max_dim = max(width, height)
+
+        if max_dim > self.max_image_size:
+            scale = self.max_image_size / max_dim
+            new_width = int(width * scale)
+            new_height = int(height * scale)
+            image = image.resize((new_width, new_height), Image.LANCZOS)
+            logging.info(f"📐 Image resized to {new_width}x{new_height}")
+
+        return image
+
+    def _generate_caption_blip2(self, image: Image.Image) -> str:
+        """Generate image caption using BLIP-2 model"""
+        try:
+            # Process image
+            inputs = self.blip2_processor(image, return_tensors="pt").to(self.device)
+
+            # Generate caption
+            with torch.no_grad():
+                generated_ids = self.blip2_model.generate(
+                    **inputs,
+                    max_length=50,
+                    num_beams=3,  # Reduced for speed
+                    early_stopping=True
+                )
+
+            # Decode caption
+            caption = self.blip2_processor.decode(generated_ids[0], skip_special_tokens=True)
+            return caption.strip()
+
+        except Exception as e:
+            logging.error(f"❌ BLIP-2 caption generation error: {e}")
+            return None
 
     def _extract_text_multi_engine(self, image_path: str) -> Dict[str, Any]:
         """Extract text using multiple OCR engines for better accuracy"""

@@ -9,6 +9,8 @@ import { simulationAPI } from "@/services/api";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import ChatQuestionInput from "./ChatQuestionInput";
+import SimulationBackground from "@/components/ui/SimulationBackground";
+import FormattedTranscript from "./FormattedTranscript";
 
 const ReplaySimulation = () => {
   const navigate = useNavigate();
@@ -136,7 +138,8 @@ const ReplaySimulation = () => {
   const { turns, simulation_text } = simulation;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen relative">
+      <SimulationBackground />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -212,13 +215,7 @@ const ReplaySimulation = () => {
         {/* Full Transcript */}
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-4">Full Transcript</h2>
-          <Card>
-            <CardContent className="p-6">
-              <pre className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">
-                {simulation_text}
-              </pre>
-            </CardContent>
-          </Card>
+          <FormattedTranscript transcript={simulation_text} />
         </div>
 
         {/* Ask Questions Section */}

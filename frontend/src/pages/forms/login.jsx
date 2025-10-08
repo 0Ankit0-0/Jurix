@@ -13,6 +13,7 @@ import { toast } from "react-hot-toast"
 import api from "@/services/api"
 import { GoogleLogin } from "@react-oauth/google"
 import { useAuth } from "@/context/AuthContext"
+import WaveGridBackground from "@/components/ui/WaveGridBackground"
 
 export default function LoginPage() {
   const { login, handleGoogleLogin } = useAuth()
@@ -110,11 +111,15 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-      {/* Enhanced Animated Background */}
-      <div className="absolute inset-0 gradient-aurora"></div>
-      <div className="absolute inset-0 gradient-mesh opacity-50"></div>
+      {/* Animated Grid Background */}
+      <WaveGridBackground />
+      
+      {/* Theme-aware gradient overlays */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-accent/8"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.15),transparent_60%)] dark:bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.08),transparent_60%)]"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.15),transparent_60%)] dark:bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.08),transparent_60%)]"></div>
 
-      {/* Enhanced Floating Elements */}
+      {/* Floating Elements */}
       <div className="absolute top-20 left-10 w-40 h-40 bg-primary/8 rounded-full blur-3xl animate-float"></div>
       <div className="absolute bottom-32 right-16 w-48 h-48 bg-accent/8 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
       <div className="absolute top-1/3 right-1/4 w-32 h-32 bg-primary/5 rounded-full blur-2xl animate-pulse-soft"></div>
@@ -125,7 +130,7 @@ export default function LoginPage() {
           <h1 className="font-heading text-fluid-2xl font-extrabold text-foreground mb-4 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
             Welcome Back
           </h1>
-          <p className="text-muted-foreground text-xl font-medium">Sign in to your Jurix account</p>
+          <p className="text-muted-foreground text-xl font-medium">Sign in to your JURIX account</p>
         </div>
 
         <Card className="glass-card border-2 border-border/30 shadow-2xl animate-slide-up hover:shadow-[0_20px_60px_rgba(0,0,0,0.15)] transition-shadow duration-500">

@@ -187,16 +187,20 @@ export function DiscussionThread({ caseId }) {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-4 pt-2 border-t border-border/50">
+                  <div className="flex items-center gap-4 pt-3 border-t border-border/50">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleLike(discussion._id || discussion.discussion_id)}
-                      className="gap-2 text-muted-foreground hover:text-primary"
+                      className="gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200"
                     >
-                      <Heart className="h-4 w-4" />
-                      <span>{discussion.likes || 0}</span>
+                      <Heart className="h-4 w-4 fill-current" />
+                      <span className="font-semibold">{discussion.likes || 0} {discussion.likes === 1 ? 'Like' : 'Likes'}</span>
                     </Button>
+                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                      <MessageSquare className="h-4 w-4" />
+                      <span>Reply</span>
+                    </div>
                   </div>
                 </div>
               ))}

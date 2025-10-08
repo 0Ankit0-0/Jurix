@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { chatbotAPI, caseAPI } from "../../services/api"
 import { toast } from "react-hot-toast"
 import { useAuth } from "@/context/AuthContext"
+import CaseUploadBackground from "@/components/ui/CaseUploadBackground"
 
 const suggestedQuestions = [
     "What are the key elements of a contract?",
@@ -161,43 +162,45 @@ export default function ChatbotPage() {
     }
 
     return (
-        <div className="flex h-screen bg-background overflow-hidden">
-            {/*  Desktop */}
-            <div className="hidden md:flex w-64 bg-muted/20 border-r border-border flex-col">
-                <div className="p-3 border-b border-border">
+        <div className="flex h-screen relative overflow-hidden">
+            <CaseUploadBackground />
+            {/*  Desktop Sidebar */}
+            <div className="hidden md:flex w-72 bg-card/50 backdrop-blur-xl border-r border-border/50 flex-col shadow-xl">
+                <div className="p-4 border-b border-border/50">
                     <Button
                         variant="outline"
-                        className="w-full justify-start hover:bg-background transition-all duration-200"
+                        className="w-full justify-start gap-2 h-11 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20 hover:border-primary/40 hover:bg-primary/15 transition-all duration-300 shadow-sm hover:shadow-md font-semibold"
                         onClick={clearHistory}
                     >
-                        <Plus className="h-4 w-4 mr-2" />
+                        <Plus className="h-4 w-4" />
                         New chat
                     </Button>
                 </div>
 
-                <ScrollArea className="flex-1 p-2">
-                    <div className="space-y-1">
+                <ScrollArea className="flex-1 p-3">
+                    <div className="space-y-2">
                         {chatHistory.map((chat) => (
                             <div
                                 key={chat.id}
-                                className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                                className={`group flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 ${
                                     chat.active 
-                                        ? "bg-muted text-foreground" 
-                                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground"
+                                        ? "bg-gradient-to-r from-primary/15 to-accent/10 text-foreground shadow-md border border-primary/20" 
+                                        : "hover:bg-muted/50 text-muted-foreground hover:text-foreground hover:shadow-sm"
                                 }`}
                             >
                                 <MessageSquare className="h-4 w-4 flex-shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm truncate">{chat.title}</p>
+                                    <p className="text-sm font-medium truncate">{chat.title}</p>
+                                    <p className="text-xs text-muted-foreground">{chat.timestamp.toLocaleDateString()}</p>
                                 </div>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 h-6 w-6 p-0">
-                                            <MoreHorizontal className="h-3 w-3" />
+                                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 h-7 w-7 p-0 hover:bg-destructive/10">
+                                            <MoreHorizontal className="h-3.5 w-3.5" />
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem>
+                                    <DropdownMenuContent align="end" className="w-48">
+                                        <DropdownMenuItem className="text-destructive focus:text-destructive">
                                             <Trash2 className="h-4 w-4 mr-2" />
                                             Delete chat
                                         </DropdownMenuItem>
@@ -248,22 +251,30 @@ export default function ChatbotPage() {
                 </div>
             )}
 
-            {/* ChatGPT-like Chat Area */}
-            <div className="flex-1 flex flex-col min-w-0">
-                {/* Simple Header */}
-                <div className="border-b border-border p-3 sm:p-4 flex-shrink-0">
+            {/* Chat Area */}
+            <div className="flex-1 flex flex-col min-w-0 relative">
+                {/* Enhanced Header */}
+                <div className="border-b border-border/50 bg-card/30 backdrop-blur-xl p-4 sm:p-5 flex-shrink-0 shadow-sm">
                     <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-4">
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                className="md:hidden"
+                                className="md:hidden hover:bg-primary/10"
                                 onClick={() => setSidebarOpen(true)}
                             >
-                                <Menu className="h-4 w-4" />
+                                <Menu className="h-5 w-5" />
                             </Button>
-                            <h1 className="text-lg font-semibold text-foreground">Legal Assistant</h1>
-                            <div className="hidden sm:flex items-center gap-2">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 shadow-lg">
+                                    <Sparkles className="h-5 w-5 text-primary" />
+                                </div>
+                                <div>
+                                    <h1 className="text-lg font-bold text-foreground">Legal Assistant</h1>
+                                    <p className="text-xs text-muted-foreground">AI-Powered Legal Guidance</p>
+                                </div>
+                            </div>
+                            <div className="hidden sm:flex items-center gap-2 ml-4">
                                 <Button
                                     variant={mode === "general" ? "default" : "outline"}
                                     size="sm"
@@ -271,7 +282,11 @@ export default function ChatbotPage() {
                                         setMode("general")
                                         setSelectedCaseId(null)
                                     }}
-                                    className="text-xs"
+                                    className={`text-xs font-semibold transition-all duration-300 ${
+                                        mode === "general" 
+                                            ? "bg-gradient-to-r from-primary to-accent shadow-md" 
+                                            : "hover:bg-primary/10"
+                                    }`}
                                 >
                                     General
                                 </Button>
@@ -279,7 +294,11 @@ export default function ChatbotPage() {
                                     variant={mode === "case_specific" ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => setMode("case_specific")}
-                                    className="text-xs"
+                                    className={`text-xs font-semibold transition-all duration-300 ${
+                                        mode === "case_specific" 
+                                            ? "bg-gradient-to-r from-primary to-accent shadow-md" 
+                                            : "hover:bg-primary/10"
+                                    }`}
                                     disabled={!user || myCases.length === 0}
                                     title={!user ? "Login to use case-specific mode" : myCases.length === 0 ? "Create a case first" : "Case-specific mode"}
                                 >
@@ -304,29 +323,35 @@ export default function ChatbotPage() {
                                 )}
                             </div>
                         </div>
-                        <Button variant="ghost" size="sm" onClick={clearHistory}>
-                            <Plus className="h-4 w-4" />
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={clearHistory}
+                            className="hover:bg-primary/10 transition-colors"
+                        >
+                            <Plus className="h-5 w-5" />
                         </Button>
                     </div>
                 </div>
 
-                {/* ChatGPT-like Messages */}
-                <ScrollArea className="flex-1">
-                    <div className="max-w-3xl mx-auto px-4 py-6">
+                {/* Enhanced Messages Area */}
+                <ScrollArea className="flex-1 bg-gradient-to-b from-transparent via-muted/5 to-transparent">
+                    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
                         {messages.length === 1 && (
-                            <div className="text-center mb-8">
-                                <div className="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Bot className="h-6 w-6 text-primary-foreground" />
+                            <div className="text-center mb-12 animate-fade-in">
+                                <div className="w-16 h-16 bg-gradient-to-br from-primary via-accent to-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-primary/20 animate-pulse-soft">
+                                    <Bot className="h-8 w-8 text-primary-foreground" />
                                 </div>
-                                <h2 className="text-2xl font-semibold text-foreground mb-2">How can I help you today?</h2>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+                                <h2 className="text-3xl font-bold text-foreground mb-3 bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">How can I help you today?</h2>
+                                <p className="text-muted-foreground mb-8">Ask me anything about legal matters, case analysis, or courtroom simulations</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
                                     {suggestedQuestions.slice(0, 4).map((question, index) => (
                                         <button
                                             key={index}
                                             onClick={() => handleSuggestedQuestion(question)}
-                                            className="p-4 text-left bg-muted/50 hover:bg-muted rounded-xl transition-colors duration-200"
+                                            className="group p-5 text-left bg-card/50 backdrop-blur-sm hover:bg-card border-2 border-border/50 hover:border-primary/50 rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-1"
                                         >
-                                            <p className="text-sm text-foreground">{question}</p>
+                                            <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">{question}</p>
                                         </button>
                                     ))}
                                 </div>
@@ -334,38 +359,47 @@ export default function ChatbotPage() {
                         )}
 
                         {messages.map((message) => (
-                            <div key={message.id} className="mb-6 animate-fade-in">
-                                <div className="flex items-start space-x-3">
-                                    <Avatar className="h-8 w-8 flex-shrink-0">
-                                        <AvatarFallback className={message.sender === "bot" ? "bg-gradient-to-br from-primary to-accent text-primary-foreground" : "bg-muted"}>
-                                            {message.sender === "bot" ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                            <div key={message.id} className="mb-8 animate-fade-in">
+                                <div className="flex items-start space-x-4">
+                                    <Avatar className={`h-10 w-10 flex-shrink-0 shadow-lg ${message.sender === "bot" ? "ring-2 ring-primary/20" : ""}`}>
+                                        <AvatarFallback className={message.sender === "bot" ? "bg-gradient-to-br from-primary to-accent text-primary-foreground" : "bg-gradient-to-br from-muted to-muted/80"}>
+                                            {message.sender === "bot" ? <Bot className="h-5 w-5" /> : <User className="h-5 w-5" />}
                                         </AvatarFallback>
                                     </Avatar>
 
                                     <div className="flex-1 min-w-0">
                                         <div className="group">
-                                            <p className="text-sm sm:text-base leading-relaxed text-foreground mb-1">{message.text}</p>
+                                            <div className={`p-4 rounded-2xl ${
+                                                message.sender === "bot" 
+                                                    ? "bg-card/50 backdrop-blur-sm border border-border/50 shadow-md" 
+                                                    : "bg-primary/10 border border-primary/20 shadow-sm"
+                                            }`}>
+                                                <p className="text-sm sm:text-base leading-relaxed text-foreground whitespace-pre-wrap">{message.text}</p>
+                                            </div>
                                             
                                             {message.sender === "bot" && (
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => copyMessage(message.text)}
-                                                        className="h-6 px-2 text-xs"
+                                                        onClick={() => {
+                                                            copyMessage(message.text)
+                                                            toast.success("Copied to clipboard")
+                                                        }}
+                                                        className="h-7 px-3 text-xs hover:bg-primary/10"
                                                     >
-                                                        <Copy className="h-3 w-3 mr-1" />
+                                                        <Copy className="h-3 w-3 mr-1.5" />
                                                         Copy
                                                     </Button>
                                                     {message.provider && (
-                                                        <span className="text-xs text-muted-foreground">
+                                                        <span className="text-xs text-muted-foreground px-2 py-1 bg-muted/50 rounded-md">
                                                             via {message.provider}
                                                         </span>
                                                     )}
-                                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs hover:bg-success/10 hover:text-success">
                                                         <ThumbsUp className="h-3 w-3" />
                                                     </Button>
-                                                    <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-xs hover:bg-destructive/10 hover:text-destructive">
                                                         <ThumbsDown className="h-3 w-3" />
                                                     </Button>
                                                 </div>
@@ -376,20 +410,23 @@ export default function ChatbotPage() {
                             </div>
                         ))}
 
-                        {/* Simple Typing indicator */}
+                        {/* Enhanced Typing indicator */}
                         {isTyping && (
-                            <div className="mb-6 animate-fade-in">
-                                <div className="flex items-start space-x-3">
-                                    <Avatar className="h-8 w-8">
+                            <div className="mb-8 animate-fade-in">
+                                <div className="flex items-start space-x-4">
+                                    <Avatar className="h-10 w-10 ring-2 ring-primary/20 shadow-lg">
                                         <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground">
-                                            <Bot className="h-4 w-4" />
+                                            <Bot className="h-5 w-5" />
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="flex items-center space-x-2 py-2">
-                                        <div className="flex space-x-1">
-                                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
-                                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                                            <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                                    <div className="p-4 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 shadow-md">
+                                        <div className="flex items-center space-x-2">
+                                            <div className="flex space-x-1.5">
+                                                <div className="w-2.5 h-2.5 bg-primary rounded-full animate-bounce"></div>
+                                                <div className="w-2.5 h-2.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.15s" }}></div>
+                                                <div className="w-2.5 h-2.5 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0.3s" }}></div>
+                                            </div>
+                                            <span className="text-xs text-muted-foreground ml-2">Thinking...</span>
                                         </div>
                                     </div>
                                 </div>
@@ -400,29 +437,30 @@ export default function ChatbotPage() {
                     </div>
                 </ScrollArea>
 
-                {/* ChatGPT-like Input */}
-                <div className="border-t border-border p-4 flex-shrink-0">
-                    <div className="max-w-3xl mx-auto">
+                {/* Enhanced Input Area */}
+                <div className="border-t border-border/50 bg-card/30 backdrop-blur-xl p-4 sm:p-6 flex-shrink-0 shadow-lg">
+                    <div className="max-w-4xl mx-auto">
                         <div className="relative">
                             <Input
                                 ref={inputRef}
                                 value={inputMessage}
                                 onChange={(e) => setInputMessage(e.target.value)}
                                 onKeyPress={handleKeyPress}
-                                placeholder="Message Legal Assistant..."
-                                className="pr-12 py-3 rounded-2xl border-border focus:border-primary bg-background text-base transition-all duration-200"
+                                placeholder="Ask me anything about legal matters..."
+                                className="pr-14 py-4 h-14 rounded-2xl border-2 border-border/50 focus:border-primary bg-card/50 backdrop-blur-sm text-base transition-all duration-300 shadow-sm focus:shadow-lg focus:shadow-primary/10 placeholder:text-muted-foreground/60"
                                 disabled={isTyping}
                             />
                             <Button
                                 onClick={handleSendMessage}
                                 disabled={!inputMessage.trim() || isTyping}
                                 size="sm"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-xl bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                             >
                                 <Send className="h-4 w-4" />
                             </Button>
                         </div>
-                        <p className="text-xs text-muted-foreground text-center mt-2">
+                        <p className="text-xs text-muted-foreground text-center mt-3 flex items-center justify-center gap-1.5">
+                            <Sparkles className="h-3 w-3" />
                             Legal Assistant can make mistakes. Verify important legal information.
                         </p>
                     </div>

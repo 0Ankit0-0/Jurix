@@ -58,12 +58,12 @@ export default function Navbar() {
                         <div className="w-12 h-12 rounded-full border-2 border-primary/50 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 flex items-center justify-center bg-gradient-to-br from-background to-muted/30 group-hover:border-primary">
                             <img
                                 src={document.documentElement.classList.contains("dark") ? LightLogo : Logo}
-                                alt="Jurix Logo"
+                                alt="JURIX Logo"
                                 className="w-10 h-10 object-contain transition-transform duration-300 group-hover:scale-110"
                             />
                         </div>
                         <span className="text-2xl sm:text-3xl lg:text-4xl font-heading font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient">
-                            Jurix
+                            JURIX
                         </span>
                     </Link>
 

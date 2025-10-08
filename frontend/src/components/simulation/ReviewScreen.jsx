@@ -6,6 +6,7 @@ import { caseAPI, simulationAPI } from "@/services/api";
 import toast from "react-hot-toast";
 import { ArrowLeft, Play, Loader2, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import ReviewBackground from "@/components/ui/ReviewBackground";
 
 export default function ReviewScreen() {
   const navigate = useNavigate();
@@ -66,7 +67,8 @@ export default function ReviewScreen() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-muted/30">
+    <div className="min-h-screen relative flex items-center justify-center p-6">
+      <ReviewBackground />
       <Card className="w-full max-w-3xl shadow-2xl glass-card border-border/30">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-heading font-bold">Review Your Case</CardTitle>

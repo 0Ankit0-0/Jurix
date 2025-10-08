@@ -31,14 +31,12 @@ class GeminiService:
     
     def _initialize_model(self):
         """Initialize and test Gemini model with fallbacks"""
-        # Updated model names for 2024
         model_candidates = [
-            "gemini-2.5-pro",           # Latest Pro (reasoning heavy)
             "gemini-2.5-flash",         # Latest Flash (fast + balanced)
             "gemini-2.5-flash-lite",    # Lightweight, cheapest for scale
             "gemini-2.0-flash-lite",    # Lightweight, cheapest for scale
             "gemini-2.0-flash",         # Previous stable Flash
-            
+
         ]
 
         

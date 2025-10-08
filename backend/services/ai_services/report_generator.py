@@ -25,7 +25,7 @@ def generate_simulation_report(case_data, simulation_results, output_path):
             f.write("-" * 40 + "\n")
             f.write(f"• Case ID: {simulation_results.get('simulation_id', 'N/A')}\n")
             f.write(f"• Case Title: {case_data.get('title', '')}\n")
-            f.write(f"• Submitted By: {case_data.get('user_id', 'N/A')}\n")
+            f.write(f"• Submitted By: {case_data.get('user_id', 'N/A')}\n")sn
             f.write(f"• Date of Simulation: {datetime.now().strftime('%d/%m/%Y')}\n")
             f.write(f"• Number of Evidences: {len(case_data.get('evidence_files', []))}\n\n")
 

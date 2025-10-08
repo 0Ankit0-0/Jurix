@@ -82,34 +82,38 @@ export function CaseCard({ caseData, showPublicToggle = false }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      whileHover={{ y: -6 }}
+      whileHover={{ y: -8, scale: 1.02 }}
       className="h-full"
     >
-      <Card className="group relative flex flex-col h-full overflow-hidden bg-card/90 backdrop-blur-sm border border-border/30 shadow-lg hover:shadow-primary/20 transition-all duration-300">
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/10 via-transparent to-accent/10 opacity-0 group-hover:opacity-30 transition-opacity duration-500 card-glow"></div>
+      <Card className="group relative flex flex-col h-full overflow-hidden bg-gradient-to-br from-card via-card/98 to-card/95 backdrop-blur-xl border-2 border-border/40 shadow-xl hover:shadow-2xl hover:shadow-primary/20 transition-all duration-500 rounded-2xl">
+        {/* Animated gradient overlay */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        
+        {/* Glow effect on hover */}
+        <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 via-accent/20 to-primary/20 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-700 -z-10"></div>
 
-        <CardHeader className="p-6 space-y-3 z-10">
+        <CardHeader className="p-6 space-y-4 z-10">
           <div className="flex items-start justify-between gap-4">
-            <h3 className="text-xl font-bold text-pretty line-clamp-2 text-foreground group-hover:text-primary transition-colors duration-300 leading-snug font-heading">
+            <h3 className="text-xl font-bold text-pretty line-clamp-2 text-foreground group-hover:text-primary transition-colors duration-300 leading-snug font-heading group-hover:translate-x-1 transition-transform">
               {title}
             </h3>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="outline" className="w-fit font-semibold">{case_type}</Badge>
+            <Badge variant="outline" className="w-fit font-semibold bg-gradient-to-r from-primary/10 to-accent/10 border-primary/30 group-hover:border-primary/50 transition-colors">{case_type}</Badge>
             {is_public ? (
-              <Badge variant="outline" className="border-primary/50 text-primary bg-primary/10 text-xs">
+              <Badge variant="outline" className="border-primary/50 text-primary bg-gradient-to-r from-primary/15 to-primary/10 text-xs font-semibold shadow-sm">
                 <Globe className="h-3 w-3 mr-1" />
                 Public
               </Badge>
             ) : (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs font-semibold bg-gradient-to-r from-secondary to-secondary/80 shadow-sm">
                 <Lock className="h-3 w-3 mr-1" />
                 Private
               </Badge>
             )}
             {hasSimulation && (
-              <Badge variant="outline" className="border-success/50 text-success bg-success/10 text-xs font-semibold">
-                <Sparkles className="h-3 w-3 mr-1" />
+              <Badge variant="outline" className="border-success/50 text-success bg-gradient-to-r from-success/15 to-success/10 text-xs font-semibold shadow-sm">
+                <Sparkles className="h-3 w-3 mr-1 fill-success/20" />
                 Simulated
               </Badge>
             )}
@@ -117,13 +121,13 @@ export function CaseCard({ caseData, showPublicToggle = false }) {
         </CardHeader>
 
         <CardContent className="p-6 pt-0 flex-grow z-10">
-          <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+          <p className="text-sm text-muted-foreground group-hover:text-foreground/80 line-clamp-3 leading-relaxed transition-colors duration-300">
             {description}
           </p>
         </CardContent>
 
         <CardFooter className="flex flex-col items-start gap-4 p-6 pt-4 mt-auto z-10">
-          <div className="w-full pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+          <div className="w-full pt-4 border-t border-gradient-to-r from-transparent via-border/50 to-transparent group-hover:via-primary/20 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground transition-colors duration-300">
             <time dateTime={new Date(created_at).toISOString()} className="font-medium">
               {formatDate(created_at)}
             </time>
@@ -174,15 +178,15 @@ export function CaseCard({ caseData, showPublicToggle = false }) {
             )}
           </div>
 
-          <div className="w-full grid grid-cols-3 gap-2 pt-4 border-t border-border/50">
-            <Button size="sm" onClick={onStart} className="w-full">
-              <Play className="h-4 w-4 mr-2" /> Start
+          <div className="w-full grid grid-cols-3 gap-2 pt-4 border-t border-gradient-to-r from-transparent via-border/50 to-transparent">
+            <Button size="sm" onClick={onStart} className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-md hover:shadow-lg transition-all duration-300">
+              <Play className="h-4 w-4 mr-1.5" /> Start
             </Button>
-            <Button size="sm" variant="secondary" onClick={onReplay} disabled={!hasSimulation} className="w-full">
-              <RotateCcw className="h-4 w-4 mr-2" /> Replay
+            <Button size="sm" variant="secondary" onClick={onReplay} disabled={!hasSimulation} className="w-full bg-gradient-to-r from-secondary to-secondary/90 hover:from-secondary/90 hover:to-secondary/80 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50">
+              <RotateCcw className="h-4 w-4 mr-1.5" /> Replay
             </Button>
-            <Button size="sm" variant="outline" onClick={onDownload} disabled={!hasSimulation} className="w-full">
-              <Download className="h-4 w-4 mr-2" /> Report
+            <Button size="sm" variant="outline" onClick={onDownload} disabled={!hasSimulation} className="w-full border-2 hover:border-primary/50 hover:bg-primary/5 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50">
+              <Download className="h-4 w-4 mr-1.5" /> Report
             </Button>
           </div>
         </CardFooter>

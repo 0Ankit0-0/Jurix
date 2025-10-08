@@ -208,35 +208,37 @@ export default function ProfilePage({ userId }) {
             enableSystem
             disableTransitionOnChange
         >
-            <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-                {/* Cover Photo Section */}
-                <div className="relative h-48 sm:h-64 bg-gradient-to-r from-primary/20 via-accent/20 to-primary/20 border-b">
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/50 to-transparent" />
+            <div className="min-h-screen bg-background">
+                {/* Enhanced Cover Photo Section */}
+                <div className="relative h-56 sm:h-72 bg-gradient-to-br from-primary/10 via-accent/10 to-primary/5 border-b border-border/50">
+                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent" />
+                    <div className="absolute inset-0 bg-grid-pattern opacity-5" />
                 </div>
 
-                <main className="container mx-auto px-4 -mt-20 sm:-mt-24 relative z-10">
-                    <div className="max-w-4xl mx-auto space-y-6">
+                <main className="container mx-auto px-4 -mt-24 sm:-mt-32 relative z-10">
+                    <div className="max-w-5xl mx-auto space-y-6">
                         {/* Profile Header */}
-                        <Card className="shadow-xl border-0 bg-card/95 backdrop-blur-sm">
+                        <Card className="shadow-2xl border-2 border-border/50 bg-card/98 backdrop-blur-md">
                             <CardContent className="pt-8 pb-6">
                                 <div className="flex flex-col lg:flex-row items-start lg:items-end gap-6">
                                     {/* Enhanced Avatar Section */}
                                     <div className="flex-shrink-0 relative">
                                         <div className="relative group">
-                                            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-background shadow-xl">
+                                            <Avatar className="h-28 w-28 sm:h-36 sm:w-36 border-4 border-background shadow-2xl ring-4 ring-primary/10">
                                                 <AvatarImage 
                                                     src={isEditing ? editedUser.avatar : user.avatar} 
                                                     className="object-cover"
                                                 />
-                                                <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-2xl sm:text-3xl font-bold">
+                                                <AvatarFallback className="bg-gradient-to-br from-primary/90 to-accent/90 text-primary-foreground text-3xl sm:text-4xl font-bold">
                                                     {(isEditing ? editedUser.name : user.name)?.charAt(0)?.toUpperCase() || <User className="h-8 w-8 sm:h-12 sm:w-12" />}
                                                 </AvatarFallback>
                                             </Avatar>
                                             
                                             {isEditing && (
-                                                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                                    <label htmlFor="avatar-upload" className="cursor-pointer">
-                                                        <Camera className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+                                                <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 cursor-pointer backdrop-blur-sm">
+                                                    <label htmlFor="avatar-upload" className="cursor-pointer flex flex-col items-center gap-1">
+                                                        <Camera className="h-7 w-7 sm:h-9 sm:w-9 text-white" />
+                                                        <span className="text-xs text-white font-medium">Change</span>
                                                         <input
                                                             id="avatar-upload"
                                                             type="file"
@@ -248,8 +250,8 @@ export default function ProfilePage({ userId }) {
                                                 </div>
                                             )}
                                             
-                                            <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-success to-success/80 rounded-full border-4 border-background flex items-center justify-center">
-                                                <div className="w-3 h-3 bg-white rounded-full"></div>
+                                            <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-br from-success to-success/80 rounded-full border-4 border-background flex items-center justify-center shadow-lg">
+                                                <div className="w-3 h-3 bg-white rounded-full animate-pulse"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -265,11 +267,11 @@ export default function ProfilePage({ userId }) {
                                                         onChange={(e) =>
                                                             handleInputChange("name", e.target.value)
                                                         }
-                                                        className="text-2xl sm:text-3xl font-bold bg-transparent border-b-2 border-primary/50 focus:border-primary outline-none px-0 py-1 w-full max-w-md"
+                                                        className="text-3xl sm:text-4xl font-bold bg-transparent border-b-2 border-primary/50 focus:border-primary outline-none px-0 py-2 w-full max-w-md transition-colors"
                                                         placeholder="Your name"
                                                     />
                                                 ) : (
-                                                    <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+                                                    <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
                                                         {user.name || 'Anonymous User'}
                                                     </h1>
                                                 )}
@@ -292,14 +294,14 @@ export default function ProfilePage({ userId }) {
                                                             </select>
                                                         </div>
                                                     ) : (
-                                                        <Badge variant="secondary" className="capitalize font-medium">
-                                                            <Briefcase className="h-3 w-3 mr-1" />
+                                                        <Badge variant="secondary" className="capitalize font-medium px-3 py-1 shadow-sm">
+                                                            <Briefcase className="h-3.5 w-3.5 mr-1.5" />
                                                             {user?.role ? user.role.replace("_", " ") : "User"}
                                                         </Badge>
                                                     )}
                                                     {user.email_verified && (
-                                                        <Badge variant="outline" className="text-success border-success">
-                                                            ✓ Verified
+                                                        <Badge variant="outline" className="text-success border-success bg-success/5 px-3 py-1 shadow-sm">
+                                                            <span className="mr-1">✓</span> Verified
                                                         </Badge>
                                                     )}
                                                 </div>
@@ -308,7 +310,7 @@ export default function ProfilePage({ userId }) {
                                             <div className="flex gap-2">
                                                 {isEditing ? (
                                                     <>
-                                                        <Button onClick={handleSave} size="sm" className="bg-primary hover:bg-primary/90">
+                                                        <Button onClick={handleSave} size="sm" className="bg-primary hover:bg-primary/90 shadow-lg">
                                                             <Save className="h-4 w-4 mr-2" />
                                                             Save Changes
                                                         </Button>
@@ -316,6 +318,7 @@ export default function ProfilePage({ userId }) {
                                                             onClick={handleCancel}
                                                             variant="outline"
                                                             size="sm"
+                                                            className="shadow-md"
                                                         >
                                                             <X className="h-4 w-4 mr-2" />
                                                             Cancel
@@ -326,7 +329,7 @@ export default function ProfilePage({ userId }) {
                                                         onClick={handleEdit}
                                                         variant="outline"
                                                         size="sm"
-                                                        className="hover:bg-primary hover:text-primary-foreground transition-colors"
+                                                        className="hover:bg-primary hover:text-primary-foreground transition-all shadow-md hover:shadow-lg"
                                                     >
                                                         <Edit className="h-4 w-4 mr-2" />
                                                         Edit Profile
@@ -336,9 +339,9 @@ export default function ProfilePage({ userId }) {
                                         </div>
 
                                         {/* Contact Information Grid */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-border/50">
-                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                                                <div className="p-2 rounded-full bg-primary/10">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-6 border-t border-border/50">
+                                            <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/40 hover:bg-muted/60 transition-all shadow-sm hover:shadow-md">
+                                                <div className="p-2.5 rounded-full bg-primary/10 ring-2 ring-primary/5">
                                                     <Mail className="h-4 w-4 text-primary" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -361,8 +364,8 @@ export default function ProfilePage({ userId }) {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                                                <div className="p-2 rounded-full bg-accent/10">
+                                            <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/40 hover:bg-muted/60 transition-all shadow-sm hover:shadow-md">
+                                                <div className="p-2.5 rounded-full bg-accent/10 ring-2 ring-accent/5">
                                                     <Phone className="h-4 w-4 text-accent" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -385,8 +388,8 @@ export default function ProfilePage({ userId }) {
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
-                                                <div className="p-2 rounded-full bg-success/10">
+                                            <div className="flex items-center gap-3 p-4 rounded-xl bg-muted/40 hover:bg-muted/60 transition-all shadow-sm hover:shadow-md">
+                                                <div className="p-2.5 rounded-full bg-success/10 ring-2 ring-success/5">
                                                     <MapPin className="h-4 w-4 text-success" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -418,9 +421,12 @@ export default function ProfilePage({ userId }) {
                         {renderRoleSpecificContent()}
 
                         {/* Published Cases */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Published Cases</CardTitle>
+                        <Card className="shadow-xl border-2 border-border/50">
+                            <CardHeader className="border-b border-border/50 bg-muted/20">
+                                <CardTitle className="flex items-center gap-2 text-xl">
+                                    <FileText className="h-5 w-5 text-primary" />
+                                    Published Cases
+                                </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-4">
@@ -428,7 +434,7 @@ export default function ProfilePage({ userId }) {
                                         publishedCases.map((caseData) => (
                                             <div
                                                 key={caseData.id}
-                                                className="border rounded-lg p-4 space-y-3"
+                                                className="border-2 border-border/50 rounded-xl p-5 space-y-3 hover:border-primary/30 transition-all shadow-sm hover:shadow-md bg-card/50"
                                             >
                                                 <div className="flex flex-col sm:flex-row justify-between gap-3">
                                                     <div>

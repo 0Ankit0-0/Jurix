@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Scale, Brain, FileText, Users, Shield, Zap, ArrowRight, Play, Star, CheckCircle, Github, Linkedin, Mail } from "lucide-react"
 import { motion } from "framer-motion"
+import WaveGridBackground from "@/components/ui/WaveGridBackground"
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -38,14 +39,14 @@ export default function HomePage() {
     ];
 
     return (
-        <div className="min-h-screen bg-background overflow-hidden">
+        <div className="min-h-screen relative overflow-hidden bg-grid-pattern">
 
             {/* Hero Section - Enhanced Design */}
-            <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+            <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-grid-pattern">
                 {/* Enhanced Background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-accent/8"></div>
+                {/* <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-accent/8"></div>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.15),transparent_60%)] dark:bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.08),transparent_60%)]"></div>
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.15),transparent_60%)] dark:bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.08),transparent_60%)]"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.15),transparent_60%)] dark:bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.08),transparent_60%)]"></div> */}
 
                 {/* Enhanced Floating Elements */}
                 <div className="absolute top-20 left-10 w-24 h-24 bg-primary/8 rounded-full blur-3xl animate-float"></div>
@@ -109,21 +110,26 @@ export default function HomePage() {
                 </div>
 
             </section>
-            <section id="features" className="py-24 lg:py-36 bg-background relative overflow-hidden">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-20 relative z-10">
+            <section id="features" className="py-24 lg:py-36 bg-muted/30 relative overflow-hidden">
+                {/* Theme-aware background */}
+                <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--primary)/0.1),_transparent_50%)]"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_hsl(var(--accent)/0.08),_transparent_50%)]"></div>
+                
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div className="text-center mb-20">
                         <motion.div
-                            className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-primary/10 text-primary mb-10 border-2 border-primary/20 shadow-lg"
+                            className="inline-flex items-center gap-2.5 px-6 py-2.5 rounded-full bg-primary/10 text-primary mb-10 border border-primary/20 shadow-lg backdrop-blur-sm"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, amount: 0.5 }}
                             transition={{ duration: 0.5 }}
                         >
-                            <Zap className="w-5 h-5" />
-                            <span className="text-sm font-bold">Powerful Features</span>
+                            <Zap className="w-4 h-4" />
+                            <span className="text-sm font-semibold">Powerful Features</span>
                         </motion.div>
                         <motion.h2
-                            className="font-heading font-extrabold text-4xl sm:text-5xl lg:text-6xl text-foreground mb-8"
+                            className="font-heading font-bold text-4xl sm:text-5xl lg:text-6xl text-foreground mb-8"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, amount: 0.5 }}
@@ -132,7 +138,7 @@ export default function HomePage() {
                             Revolutionary Legal Technology
                         </motion.h2>
                         <motion.p
-                            className="text-xl sm:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+                            className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true, amount: 0.5 }}
@@ -142,7 +148,7 @@ export default function HomePage() {
                         </motion.p>
                     </div>
                     <motion.div
-                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10 auto-rows-fr"
+                        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 relative z-10"
                         variants={containerVariants}
                         initial="hidden"
                         whileInView="visible"
@@ -152,21 +158,31 @@ export default function HomePage() {
                             <motion.div
                                 key={i}
                                 variants={itemVariants}
-                                className={`
-        ${i === 2 ? "sm:col-span-2 lg:col-span-1 lg:row-span-2" : ""}
-        ${i === 4 ? "sm:col-span-2 lg:col-span-2" : ""}
-      `}
                             >
-                                <div className={`group p-8 rounded-2xl h-full border-2 border-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 flex flex-col justify-between ${i === 2 ? "card-glow shadow-xl" : ""}`}>
-                                    <div className="flex items-center gap-4">
-                                        <feature.icon className="h-8 w-8 text-primary transition-colors duration-300 shrink-0" />
-                                        <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300">
-                                            {feature.title}
-                                        </h3>
-                                    </div>
-                                    <div className="my-4 border-t border-border/50 group-hover:border-primary/30 transition-colors duration-300"></div>
-                                    <p className="text-muted-foreground leading-relaxed">{feature.desc}</p>
-                                </div>
+                                <Card className="group relative h-full overflow-hidden border-2 border-border/50 bg-card/50 backdrop-blur-sm hover:border-primary/50 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
+                                    {/* Hover gradient overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                    
+                                    {/* Glow effect */}
+                                    <div className="absolute -inset-1 bg-gradient-to-br from-primary/20 via-accent/20 to-primary/20 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-700 -z-10"></div>
+                                    
+                                    <CardHeader className="space-y-4 pb-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/15 to-accent/10 group-hover:from-primary/25 group-hover:to-accent/20 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-lg border border-primary/20">
+                                                <feature.icon className="h-6 w-6 text-primary transition-all duration-300 shrink-0" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors duration-300 leading-tight">
+                                                {feature.title}
+                                            </h3>
+                                        </div>
+                                    </CardHeader>
+                                    
+                                    <CardContent className="pb-6">
+                                        <p className="text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-colors duration-300">
+                                            {feature.desc}
+                                        </p>
+                                    </CardContent>
+                                </Card>
                             </motion.div>
                         ))}
                     </motion.div>
@@ -187,7 +203,7 @@ export default function HomePage() {
                             Trusted by Legal Professionals
                         </h2>
                         <p className="text-fluid-lg text-muted-foreground max-w-3xl mx-auto">
-                            Join thousands of attorneys who have transformed their practice with Jurix
+                            Join thousands of attorneys who have transformed their practice with JURIX
                         </p>
                     </div>
 
@@ -200,7 +216,7 @@ export default function HomePage() {
                                     ))}
                                 </div>
                                 <blockquote className="font-serif italic text-lg text-card-foreground mb-6 leading-relaxed">
-                                    "Jurix has revolutionized how we prepare for trials. The AI simulations are incredibly realistic and
+                                    "JURIX has revolutionized how we prepare for trials. The AI simulations are incredibly realistic and
                                     have improved our success rate by 40%."
                                 </blockquote>
                                 <div className="flex items-center space-x-4">
@@ -246,7 +262,7 @@ export default function HomePage() {
                                     ))}
                                 </div>
                                 <blockquote className="font-serif italic text-lg text-card-foreground mb-6 leading-relaxed">
-                                    "Jurix's collaborative features have transformed our firm's workflow. We're more efficient and better
+                                    "JURIX's collaborative features have transformed our firm's workflow. We're more efficient and better
                                     prepared than ever."
                                 </blockquote>
                                 <div className="flex items-center space-x-4">
@@ -274,7 +290,7 @@ export default function HomePage() {
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
                     <div className="max-w-4xl mx-auto">
                         <h2 className="font-heading font-bold text-white text-fluid-2xl lg:text-5xl mb-8 drop-shadow-lg">
-                            Empower Your Legal Practice with Jurix
+                            Empower Your Legal Practice with JURIX
                         </h2>
                         <p className="text-lg mb-12 max-w-3xl mx-auto text-white/90 leading-relaxed">
                             Experience AI-driven courtroom simulation, smart legal document parsing, and collaborative case analysis.
@@ -309,7 +325,7 @@ export default function HomePage() {
                         <div className="lg:col-span-2">
                             <div className="flex items-center space-x-3 mb-6">
                                 <Scale className="h-8 w-8 text-accent" />
-                                <span className="font-heading font-bold text-2xl text-foreground">Jurix</span>
+                                <span className="font-heading font-bold text-2xl text-foreground">JURIX</span>
                             </div>
                             <p className="text-muted-foreground leading-relaxed mb-6 max-w-md">
                                 Where Justice Meets Technology. Empowering legal professionals with AI-driven solutions for the modern courtroom.
@@ -371,7 +387,7 @@ export default function HomePage() {
 
                     <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center">
                         <p className="text-sm text-muted-foreground mb-4 md:mb-0">
-                            &copy; 2025 Jurix. All rights reserved. Where Justice Meets Technology.
+                            &copy; 2025 JURIX. All rights reserved. Where Justice Meets Technology.
                         </p>
                         <div className="flex items-center gap-6 text-sm text-muted-foreground">
                             <span className="flex items-center gap-2">

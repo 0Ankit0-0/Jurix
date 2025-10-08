@@ -9,6 +9,9 @@ import { simulationAPI } from "@/services/api";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import ChatQuestionInput from "./ChatQuestionInput";
+import SimulationBackground from "@/components/ui/SimulationBackground";
+import TypingIndicator from "./TypingIndicator";
+import FormattedTranscript from "./FormattedTranscript";
 
 const LiveSimulation = () => {
   const navigate = useNavigate();
@@ -22,6 +25,8 @@ const LiveSimulation = () => {
   const [showChat, setShowChat] = useState(true);
   const [chatAnswers, setChatAnswers] = useState([]);
   const [isSimulating, setIsSimulating] = useState(true); // Check if still running
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingRole, setTypingRole] = useState("Judge");
 
   useEffect(() => {
     // Check for invalid caseId
@@ -99,13 +104,30 @@ const LiveSimulation = () => {
         setCurrentTurn((prev) => {
           if (prev >= simulation.turns.length - 1) {
             setIsPlaying(false);
+            setIsTyping(false);
             return prev;
           }
+          
+          // Show typing indicator before next turn
+          setIsTyping(true);
+          const nextTurn = simulation.turns[prev + 1];
+          if (nextTurn) {
+            setTypingRole(nextTurn.role);
+          }
+          
+          // Hide typing indicator and show turn after delay
+          setTimeout(() => {
+            setIsTyping(false);
+          }, 1500 / playbackSpeed);
+          
           return prev + 1;
         });
       }, 3000 / playbackSpeed); // Base 3 seconds per turn
     }
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      setIsTyping(false);
+    };
   }, [isPlaying, simulation, playbackSpeed, isSimulating]);
 
   if (loading || isSimulating) {
@@ -152,7 +174,8 @@ const LiveSimulation = () => {
   const { turns, simulation_text } = simulation;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen relative">
+      <SimulationBackground />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -229,6 +252,9 @@ const LiveSimulation = () => {
 
         {/* Turns Display */}
         <div className="space-y-4">
+          {isTyping && currentTurn < turns.length - 1 && (
+            <TypingIndicator role={typingRole} />
+          )}
           {turns.slice(0, currentTurn + 1).map((turn, index) => (
             <motion.div
               key={turn.turn_number}
@@ -267,13 +293,7 @@ const LiveSimulation = () => {
         {/* Full Transcript */}
         <div className="mt-12">
           <h2 className="text-2xl font-bold mb-4">Full Transcript</h2>
-          <Card>
-            <CardContent className="p-6">
-              <pre className="whitespace-pre-wrap text-sm text-foreground leading-relaxed">
-                {simulation_text}
-              </pre>
-            </CardContent>
-          </Card>
+          <FormattedTranscript transcript={simulation_text} />
         </div>
       </div>
     </div>

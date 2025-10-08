@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { FileText, Search, Brain, CircleCheck } from "lucide-react";
 import { simulationAPI } from "@/services/api";
 import toast from "react-hot-toast";
+import ProcessingBackground from "@/components/ui/ProcessingBackground";
 
 /** Get icon for processing step */
 function getStepIcon(index) {
@@ -141,13 +142,20 @@ export default function ProcessingScreen() {
           return;
         }
 
+        // Enhanced progress calculation based on backend status
         const backendProgress = statusData.progress || 0;
+        const backendStep = statusData.step || 0;
+        
+        // Calculate estimated progress based on step if backend doesn't provide it
+        let estimatedProgress = backendProgress;
+        if (backendProgress === 0 && backendStep > 0) {
+          estimatedProgress = (backendStep / steps.length) * 100;
+        }
 
-        const newProgress = Math.max(backendProgress, progress);
+        const newProgress = Math.max(estimatedProgress, progress);
         animateProgress(newProgress);
 
-        const newStep = statusData.step || Math.floor(newProgress / (100 / steps.length));
-        setCurrentStep(newStep);
+        setCurrentStep(backendStep);
 
       } catch (error) {
         console.error("Error polling simulation status:", error);
@@ -155,7 +163,7 @@ export default function ProcessingScreen() {
     }
 
     pollStatus();
-    pollingIntervalRef.current = setInterval(pollStatus, 2000);
+    pollingIntervalRef.current = setInterval(pollStatus, 1000); // Poll more frequently for smoother updates
 
     return () => {
       isActive = false;
@@ -195,7 +203,8 @@ export default function ProcessingScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      <ProcessingBackground progress={progress / 100} />
       <Card className="w-full max-w-2xl shadow-2xl border-border/30 glass-card">
         <CardHeader className="space-y-4 text-center pb-8">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg">
@@ -238,4 +247,3 @@ export default function ProcessingScreen() {
     </div>
   );
 }
-

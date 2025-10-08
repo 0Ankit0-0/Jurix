@@ -17,15 +17,16 @@ import {
     Select, SelectContent, SelectItem,
     SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { 
-    Eye, EyeOff, Check, Loader2, UserPlus, 
-    Shield, Zap, FileText, Mail, Lock, User, Briefcase 
+import {
+    Eye, EyeOff, Check, Loader2, UserPlus,
+    Shield, Zap, FileText, Mail, Lock, User, Briefcase
 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import { useFormValidation } from "@/hooks/useFormValidation";
 import api from "@/services/api";
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '@/context/AuthContext';
+import WaveGridBackground from "@/components/ui/WaveGridBackground";
 
 const validationRules = {
     firstName: ['required', 'name'],
@@ -146,14 +147,18 @@ export default function SignupPage() {
 
     return (
         <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-            {/* Animated Background */}
-            <div className="absolute inset-0 gradient-aurora"></div>
-            <div className="absolute inset-0 gradient-mesh opacity-30"></div>
+            {/* Animated Grid Background */}
+            <WaveGridBackground />
+            
+            {/* Theme-aware gradient overlays */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-accent/8"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.15),transparent_60%)] dark:bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.08),transparent_60%)]"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.15),transparent_60%)] dark:bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent)/0.08),transparent_60%)]"></div>
 
             {/* Floating Elements */}
-            <div className="absolute top-20 left-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl animate-float"></div>
-            <div className="absolute bottom-32 right-16 w-40 h-40 bg-accent/5 rounded-full blur-2xl animate-float" style={{ animationDelay: '2s' }}></div>
-            <div className="absolute top-1/3 right-1/4 w-24 h-24 bg-primary/3 rounded-full blur-xl animate-pulse-soft"></div>
+            <div className="absolute top-20 left-10 w-32 h-32 bg-primary/8 rounded-full blur-2xl animate-float"></div>
+            <div className="absolute bottom-32 right-16 w-40 h-40 bg-accent/8 rounded-full blur-2xl animate-float" style={{ animationDelay: '2s' }}></div>
+            <div className="absolute top-1/3 right-1/4 w-24 h-24 bg-primary/5 rounded-full blur-xl animate-pulse-soft"></div>
 
             <div className="w-full max-w-lg relative z-10">
                 {/* Header */}
@@ -162,7 +167,7 @@ export default function SignupPage() {
                         <UserPlus className="h-8 w-8 text-primary-foreground" />
                     </div>
                     <h1 className="font-heading text-fluid-xl font-bold text-foreground mb-3">
-                        Join Jurix
+                        Join JURIX
                     </h1>
                     <p className="text-muted-foreground text-lg">
                         Create your account and revolutionize your legal practice
@@ -173,7 +178,7 @@ export default function SignupPage() {
                     <CardHeader className="space-y-2 p-8">
                         <CardTitle className="font-heading text-2xl font-semibold text-center">Create Account</CardTitle>
                         <CardDescription className="text-center text-base">
-                            Get started with your free Jurix account today
+                            Get started with your free JURIX account today
                         </CardDescription>
                     </CardHeader>
 
@@ -434,7 +439,7 @@ export default function SignupPage() {
                 {/* Features */}
                 <div className="mt-8 space-y-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
                     <p className="text-center text-base font-semibold text-foreground">
-                        What you'll get with Jurix:
+                        What you'll get with JURIX:
                     </p>
                     <div className="grid grid-cols-1 gap-3">
                         {[
