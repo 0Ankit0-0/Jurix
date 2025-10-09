@@ -1,4 +1,5 @@
 from .base_agent import BaseAgent
+from ..prompts.judge_prompts import OPENING_PROMPT, EVIDENCE_EVALUATION_PROMPT, FINAL_JUDGMENT_PROMPT
 from typing import Dict, List, Any
 import random
 
@@ -72,24 +73,10 @@ class JudgeAgent(BaseAgent):
         case_type = case_data.get('case_type', 'legal matter')
         
         prompt = f"""
-        Open court session as a judge for this case:
-        
         Case: {case_title}
         Type: {case_type}
         Parties: {plaintiff} v. {defendant}
-        
-        Your opening should:
-        1. Call court to order with appropriate formality
-        2. State the case name and docket number
-        3. Identify the parties and their counsel
-        4. Explain the nature of the proceedings
-        5. Set expectations for courtroom conduct
-        6. Ensure all parties are ready to proceed
-        7. Maintain judicial dignity and authority
-        
-        Be formal, authoritative, and fair to all parties.
-        Establish the serious nature of the proceedings.
-        """
+        """ + OPENING_PROMPT
         
         return self.respond(prompt, "opening court session")
     

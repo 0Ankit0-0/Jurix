@@ -23,7 +23,7 @@ const ReplaySimulation = () => {
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showChat, setShowChat] = useState(false);
   const [chatAnswers, setChatAnswers] = useState([]);
-  
+
 
   useEffect(() => {
     const fetchSimulation = async () => {

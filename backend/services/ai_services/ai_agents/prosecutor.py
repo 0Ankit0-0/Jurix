@@ -1,4 +1,5 @@
 from .base_agent import BaseAgent
+from ..prompts.prosecutor_prompts import OPENING_STATEMENT_PROMPT, EVIDENCE_PRESENTATION_PROMPT, CLOSING_ARGUMENT_PROMPT
 from typing import Dict, List, Any
 import random
 
@@ -71,27 +72,16 @@ class ProsecutorAgent(BaseAgent):
         self.think("Crafting opening statement to establish prosecution theory", "strategy")
         
         prompt = f"""
-        Deliver a powerful opening statement as a prosecutor for this case:
-        
         Case: {case_data.get('title', 'Unknown Case')}
         Type: {case_data.get('case_type', 'unknown')}
         Defendant: {case_data.get('parties', {}).get('defendant', 'the defendant')}
         Plaintiff: {case_data.get('parties', {}).get('plaintiff', 'the people')}
-        
+
         Case Theory: {self.prosecution_strategy.get('main_theory', 'Defendant is responsible for the alleged wrongdoing')}
-        
+
         Evidence Available: {len(evidence)} pieces including:
         {self._summarize_evidence(evidence)}
-        
-        Your opening should:
-        1. Grab attention with a compelling narrative
-        2. Outline what you will prove
-        3. Preview key evidence
-        4. Establish credibility and confidence
-        5. End with a strong statement of your case theory
-        
-        Be persuasive but professional. Address the jury directly.
-        """
+        """ + OPENING_STATEMENT_PROMPT
         
         return self.respond(prompt, "prosecution opening statement")
     

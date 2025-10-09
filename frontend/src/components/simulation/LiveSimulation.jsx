@@ -27,6 +27,8 @@ const LiveSimulation = () => {
   const [isSimulating, setIsSimulating] = useState(true); // Check if still running
   const [isTyping, setIsTyping] = useState(false);
   const [typingRole, setTypingRole] = useState("Judge");
+  const [progress, setProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
     // Check for invalid caseId
@@ -41,6 +43,14 @@ const LiveSimulation = () => {
         // First check status
         const statusResponse = await simulationAPI.getStatus(caseId);
         const statusData = statusResponse.data;
+
+        // Update progress from backend
+        if (statusData.progress !== undefined) {
+          setProgress(statusData.progress);
+        }
+        if (statusData.step !== undefined) {
+          setCurrentStep(statusData.step);
+        }
 
         if (statusData.completed) {
           setIsSimulating(false);
@@ -107,19 +117,19 @@ const LiveSimulation = () => {
             setIsTyping(false);
             return prev;
           }
-          
+
           // Show typing indicator before next turn
           setIsTyping(true);
           const nextTurn = simulation.turns[prev + 1];
           if (nextTurn) {
             setTypingRole(nextTurn.role);
           }
-          
+
           // Hide typing indicator and show turn after delay
           setTimeout(() => {
             setIsTyping(false);
           }, 1500 / playbackSpeed);
-          
+
           return prev + 1;
         });
       }, 3000 / playbackSpeed); // Base 3 seconds per turn
@@ -133,11 +143,30 @@ const LiveSimulation = () => {
   if (loading || isSimulating) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-6">
           <LoadingSpinner size="xl" className="text-primary mx-auto" />
-          <p className="text-muted-foreground animate-pulse">
-            {isSimulating ? "Running live simulation..." : "Loading simulation..."}
-          </p>
+          <div className="space-y-2">
+            <p className="text-muted-foreground animate-pulse">
+              {isSimulating ? "Running live simulation..." : "Loading simulation..."}
+            </p>
+            {isSimulating && (
+              <div className="w-full max-w-md mx-auto">
+                <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                  <span>Progress</span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                  <div
+                    className="bg-primary h-2.5 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Step {currentStep}: Processing court simulation...
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -221,6 +250,17 @@ const LiveSimulation = () => {
                     ))}
                   </div>
                 )}
+                <CardContent>
+                  {turn.thinking_process && (
+                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                      <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">Thinking Process:</p>
+                      <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
+                        {turn.thinking_process}
+                      </p>
+                    </div>
+                  )}
+                  <p className="text-foreground leading-relaxed">{turn.message}</p>
+                </CardContent>
 
                 {/* Question Input */}
                 <ChatQuestionInput

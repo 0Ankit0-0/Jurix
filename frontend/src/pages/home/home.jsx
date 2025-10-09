@@ -39,10 +39,10 @@ export default function HomePage() {
     ];
 
     return (
-        <div className="min-h-screen relative overflow-hidden bg-grid-pattern">
+        <div className="min-h-screen relative overflow-hidden">
 
             {/* Hero Section - Enhanced Design */}
-            <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-grid-pattern">
+            <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
                 {/* Enhanced Background */}
                 {/* <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-background to-accent/8"></div>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.15),transparent_60%)] dark:bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary)/0.08),transparent_60%)]"></div>

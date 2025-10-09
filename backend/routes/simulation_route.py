@@ -38,50 +38,50 @@ def parse_simulation_into_turns(transcript: str) -> List[Dict[str, Any]]:
     current_message = []
     turn_number = 0
     
+    # More robust role detection
     role_markers = {
         'JUDGE:': 'Judge',
-        'PROSECUTOR': 'Prosecutor',
-        'DEFENSE': 'Defense',
-        'WITNESS': 'Witness',
+        'PROSECUTOR:': 'Prosecutor',
+        'DEFENSE:': 'Defense',
         'COURT:': 'Court'
     }
     
     for line in lines:
         line = line.strip()
-        if not line or line.startswith('=') or line.startswith('-'):
+        if not line or line.startswith('='):
             continue
             
-        # Check if line starts with a role marker
         role_found = None
+        # Check if line starts with a role marker, ignoring case
         for marker, role in role_markers.items():
-            if marker in line.upper():
+            if line.upper().startswith(marker):
                 role_found = role
                 # Extract message after role marker
-                message_start = line.upper().find(marker) + len(marker)
+                message_start = len(marker)
                 line = line[message_start:].strip()
                 break
         
         if role_found:
-            # Save previous turn
+            # Save previous turn if it exists
             if current_role and current_message:
                 message_text = ' '.join(current_message).strip()
-                if message_text:  # Only add if there's actual content
+                if message_text:
                     turns.append({
                         'turn_number': turn_number,
                         'role': current_role,
                         'message': message_text,
-                        'timestamp': f"{9 + (turn_number // 4):02d}:{(turn_number * 15) % 60:02d}:00",
-                        'duration': len(message_text) // 20 + 3  # Estimate duration based on length
+                        'timestamp': f"{9 + (turn_number // 4):02d}:{(turn_number * 15) % 60:02d}:00"
                     })
                     turn_number += 1
             
-            # Start new turn
+            # Start a new turn
             current_role = role_found
             current_message = [line] if line else []
-        elif current_role and line:
+        elif current_role:
+            # Continue the message for the current role
             current_message.append(line)
     
-    # Add last turn
+    # Add the very last turn
     if current_role and current_message:
         message_text = ' '.join(current_message).strip()
         if message_text:
@@ -89,8 +89,7 @@ def parse_simulation_into_turns(transcript: str) -> List[Dict[str, Any]]:
                 'turn_number': turn_number,
                 'role': current_role,
                 'message': message_text,
-                'timestamp': f"{9 + (turn_number // 4):02d}:{(turn_number * 15) % 60:02d}:00",
-                'duration': len(message_text) // 20 + 3
+                'timestamp': f"{9 + (turn_number // 4):02d}:{(turn_number * 15) % 60:02d}:00"
             })
     
     return turns
@@ -215,8 +214,12 @@ def generate_static_fallback(case_data: Dict[str, Any], evidence_analysis: List[
 
 
 def run_agent_simulation(case_data: Dict[str, Any], evidence_analysis: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Run local AI agents (Prosecutor, Defense, Judge) to build a transcript and thinking logs."""
+    """Run local AI agents (Prosecutor, Defense, Judge) in parallel to build a transcript and thinking logs."""
     try:
+        import threading
+        import concurrent.futures
+        from concurrent.futures import ThreadPoolExecutor
+
         prosecutor = ProsecutorAgent()
         defense = DefenseAgent()
         judge = JudgeAgent()
@@ -226,32 +229,55 @@ def run_agent_simulation(case_data: Dict[str, Any], evidence_analysis: List[Dict
         transcript.append("COURT SESSION BEGINS")
         transcript.append("=" * 60)
 
-        # Judge opening
-        judge_open = judge.open_court(case_data)
+        # Parallel execution of opening statements
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit tasks
+            judge_future = executor.submit(judge.open_court, case_data)
+            prosecutor_future = executor.submit(prosecutor.make_opening_statement, case_data, evidence_analysis)
+            defense_future = executor.submit(defense.make_opening_statement, case_data, evidence_analysis)
+
+            # Get results
+            judge_open = judge_future.result()
+            prosecutor_open = prosecutor_future.result()
+            defense_open = defense_future.result()
+
         transcript.append(f"JUDGE: {judge_open}\n")
 
-        # Prosecutor and Defense opening statements
         transcript.append("PROSECUTOR'S OPENING:")
-        transcript.append(prosecutor.make_opening_statement(case_data, evidence_analysis))
+        transcript.append(prosecutor_open)
         transcript.append("")
 
         transcript.append("DEFENSE'S OPENING:")
-        transcript.append(defense.make_opening_statement(case_data, evidence_analysis))
+        transcript.append(defense_open)
         transcript.append("")
 
         # Evidence presentation (limit to first 5 for performance)
         transcript.append("EVIDENCE PRESENTATION:")
         for i, ev in enumerate(evidence_analysis[:5], start=1):
-            pres = prosecutor.present_evidence(ev)
-            cross = defense.cross_examine(ev.get("summary", ev.get("title", "evidence")))
+            # Parallel evidence presentation and cross-examination
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                pres_future = executor.submit(prosecutor.present_evidence, ev)
+                cross_future = executor.submit(defense.cross_examine, ev.get("summary", ev.get("title", "evidence")))
+
+                pres = pres_future.result()
+                cross = cross_future.result()
+
             transcript.append(f"PROSECUTOR (Evidence {i}): {pres}")
             transcript.append(f"DEFENSE (Cross-exam): {cross}\n")
 
-        # Closings
+        # Parallel closing arguments
         summary_line = f"Case summary: {case_data.get('title')} — evidence items: {len(evidence_analysis)}"
         transcript.append("CLOSING ARGUMENTS:")
-        transcript.append("PROSECUTOR: " + prosecutor.make_closing_argument(summary_line))
-        transcript.append("DEFENSE: " + defense.make_closing_argument(summary_line))
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            prosecutor_close_future = executor.submit(prosecutor.make_closing_argument, summary_line)
+            defense_close_future = executor.submit(defense.make_closing_argument, summary_line)
+
+            prosecutor_close = prosecutor_close_future.result()
+            defense_close = defense_close_future.result()
+
+        transcript.append("PROSECUTOR: " + prosecutor_close)
+        transcript.append("DEFENSE: " + defense_close)
         transcript.append("")
 
         # Judge decision
@@ -272,7 +298,7 @@ def run_agent_simulation(case_data: Dict[str, Any], evidence_analysis: List[Dict
         return {
             "transcript": "\n".join(transcript),
             "thinking_processes": thinking,
-            "meta": {"provider": "local_agents"},
+            "meta": {"provider": "local_agents_parallel"},
         }
 
     except Exception as e:

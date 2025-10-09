@@ -8,6 +8,7 @@ import Navbar from "./components/homepageComponents/navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PageTransition from "./components/ui/page-transition";
 import ProcessingScreen from "./components/simulation/ProcessingScreen";
+import WaveGridBackground from "./components/ui/WaveGridBackground";
 
 // Lazy load components for better performance
 const Dashboard = React.lazy(() => import("./pages/Dashboard/dashboard"));
@@ -227,6 +228,7 @@ function AnimatedRoutes() {
 function App() {
   return (
     <ErrorBoundary fallbackMessage="Something went wrong with the application. Please refresh the page.">
+      <WaveGridBackground />
       <Router>
         <Navbar />
         <Suspense fallback={<PageLoader />}>

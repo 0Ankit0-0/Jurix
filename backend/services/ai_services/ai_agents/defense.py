@@ -1,4 +1,5 @@
 from .base_agent import BaseAgent
+from ..prompts.defense_prompts import OPENING_STATEMENT_PROMPT, CROSS_EXAMINATION_PROMPT, CLOSING_ARGUMENT_PROMPT
 from typing import Dict, List, Any
 import random
 
@@ -75,8 +76,6 @@ class DefenseAgent(BaseAgent):
         client_name = case_data.get('parties', {}).get('defendant', 'my client')
         
         prompt = f"""
-        Deliver a powerful opening statement as a defense attorney:
-        
         Case: {case_data.get('title', 'Unknown Case')}
         Type: {case_data.get('case_type', 'unknown')}
         Client: {client_name}
@@ -85,18 +84,7 @@ class DefenseAgent(BaseAgent):
         Defense Theory: {self.defense_strategy.get('main_theory', 'The evidence does not support guilt')}
         
         Prosecution Evidence to Challenge: {len(evidence)} pieces
-        
-        Your opening should:
-        1. Establish presumption of innocence
-        2. Preview reasonable doubt you will create
-        3. Humanize your client
-        4. Challenge prosecution's case preview
-        5. Set expectation that prosecution will fail to meet burden
-        6. End with strong statement of client's innocence
-        
-        Be passionate about protecting your client's rights.
-        Use phrases like "The evidence will show..." and "reasonable doubt."
-        """
+        """ + OPENING_STATEMENT_PROMPT
         
         return self.respond(prompt, "defense opening statement")
     
@@ -109,22 +97,8 @@ class DefenseAgent(BaseAgent):
         self.reasonable_doubt_points.append(doubt_point)
         
         prompt = f"""
-        Cross-examine this prosecution evidence as a defense attorney:
-        
         Prosecution Evidence: {prosecution_evidence}
-        
-        Your cross-examination should:
-        1. Challenge the reliability and accuracy of the evidence
-        2. Question the chain of custody or collection methods
-        3. Highlight any inconsistencies or gaps
-        4. Suggest alternative explanations
-        5. Emphasize what the evidence does NOT prove
-        6. Create reasonable doubt about its significance
-        
-        Use leading questions and focus on weaknesses.
-        Be aggressive but professional in protecting your client.
-        End with a statement that creates doubt.
-        """
+        """ + CROSS_EXAMINATION_PROMPT
         
         return self.respond(prompt, "cross-examination of prosecution evidence")
     
