@@ -37,16 +37,19 @@ const WaveGridBackground = () => {
 
     let colors = getColors(isDark);
 
-    // ⚛️ Create particles (moved ABOVE resizeCanvas to fix ReferenceError)
+    // ⚛️ Create particles
     const createParticles = () => {
       if (!mounted) return;
-      const rect = canvas.getBoundingClientRect();
       particlesRef.current = [];
+
+      // Use window dimensions for particle creation
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
       for (let i = 0; i < 100; i++) {
         particlesRef.current.push({
-          x: Math.random() * rect.width,
-          y: Math.random() * rect.height,
+          x: Math.random() * width,
+          y: Math.random() * height,
           vx: (Math.random() - 0.5) * 0.8,
           vy: (Math.random() - 0.5) * 0.8,
           size: Math.random() * 3 + 1,
@@ -57,19 +60,21 @@ const WaveGridBackground = () => {
       }
     };
 
-    // 🧭 Resize + scale canvas
+    // 🧭 Resize + scale canvas to full viewport
     const resizeCanvas = () => {
       if (!mounted) return;
       const dpr = window.devicePixelRatio || 1;
-      const rect = canvas.getBoundingClientRect();
+      
+      // Use window dimensions instead of getBoundingClientRect
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
-      ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform before scaling
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+
       ctx.scale(dpr, dpr);
-
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      canvas.style.width = `${rect.width}px`;
-      canvas.style.height = `${rect.height}px`;
 
       createParticles();
     };
@@ -82,8 +87,8 @@ const WaveGridBackground = () => {
     const highlights = [];
     for (let i = 0; i < 3; i++) {
       highlights.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
         speed: 0.5 + Math.random(),
         opacity: 0.1 + Math.random() * 0.2,
       });
@@ -96,26 +101,27 @@ const WaveGridBackground = () => {
       if (!mounted) return;
 
       animationFrame++;
-      const rect = canvas.getBoundingClientRect();
+      const width = window.innerWidth;
+      const height = window.innerHeight;
 
       // Background
       ctx.fillStyle = colors.background;
-      ctx.fillRect(0, 0, rect.width, rect.height);
+      ctx.fillRect(0, 0, width, height);
 
       // Grid
       ctx.strokeStyle = colors.grid;
       ctx.lineWidth = 1;
       ctx.globalAlpha = 0.6;
-      for (let x = 0; x <= rect.width; x += gridSize) {
+      for (let x = 0; x <= width; x += gridSize) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, rect.height);
+        ctx.lineTo(x, height);
         ctx.stroke();
       }
-      for (let y = 0; y <= rect.height; y += gridSize) {
+      for (let y = 0; y <= height; y += gridSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
-        ctx.lineTo(rect.width, y);
+        ctx.lineTo(width, y);
         ctx.stroke();
       }
 
@@ -128,11 +134,11 @@ const WaveGridBackground = () => {
 
         ctx.beginPath();
         ctx.moveTo(highlight.x, 0);
-        ctx.lineTo(highlight.x, rect.height);
+        ctx.lineTo(highlight.x, height);
         ctx.stroke();
 
         highlight.x += highlight.speed;
-        if (highlight.x > rect.width) {
+        if (highlight.x > width) {
           highlight.x = 0;
           highlight.opacity = 0.1 + Math.random() * 0.2;
         }
@@ -169,10 +175,10 @@ const WaveGridBackground = () => {
         // Movement + wrap
         particle.x += particle.vx;
         particle.y += particle.vy;
-        if (particle.x < 0) particle.x = rect.width;
-        if (particle.x > rect.width) particle.x = 0;
-        if (particle.y < 0) particle.y = rect.height;
-        if (particle.y > rect.height) particle.y = 0;
+        if (particle.x < 0) particle.x = width;
+        if (particle.x > width) particle.x = 0;
+        if (particle.y < 0) particle.y = height;
+        if (particle.y > height) particle.y = 0;
       });
 
       ctx.globalAlpha = 1;
@@ -187,7 +193,7 @@ const WaveGridBackground = () => {
       if (newIsDark !== isDark) {
         setIsDark(newIsDark);
         colors = getColors(newIsDark);
-        createParticles(); // reinitialize with new colors
+        createParticles();
       }
     });
 
@@ -210,8 +216,11 @@ const WaveGridBackground = () => {
       className="fixed inset-0 w-full h-full -z-10"
       style={{
         pointerEvents: 'none',
-        width: '100%',
-        height: '100%',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
       }}
     />
   );
