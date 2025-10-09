@@ -2,69 +2,51 @@ import { useEffect, useRef, useState } from 'react';
 
 const WaveGridBackground = () => {
   const canvasRef = useRef(null);
-  const [isDark, setIsDark] = useState(document.documentElement.classList.contains('dark'));
+  const animationRef = useRef(null);
+  const particlesRef = useRef([]);
+  const [isDark, setIsDark] = useState(() =>
+    document.documentElement.classList.contains('dark')
+  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
-    // Set canvas size
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
+    let mounted = true;
 
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // Colors based on theme
-    const colors = {
+    // 🎨 Colors based on theme
+    const getColors = (dark) => ({
       light: {
-        background: '#fafaf9', // ivory-white
-        grid: '#d4af37', // golden
-        highlights: '#f59e0b', // amber
-        waves: '#fbbf24', // yellow
-        particles: '#d4af37', // golden particles
-        particleGlow: '#f59e0b', // amber glow
+        background: '#fafaf9',
+        grid: 'rgba(212, 175, 55, 0.3)',
+        highlights: 'rgba(245, 158, 11, 0.2)',
+        particles: 'rgba(212, 175, 55, 0.6)',
+        particleGlow: 'rgba(245, 158, 11, 0.3)',
       },
       dark: {
-        background: '#0f172a', // deep navy
-        grid: '#06b6d4', // cyan
-        highlights: '#0891b2', // cyan-600
-        waves: '#22d3ee', // cyan-400
-        depth: '#1e293b', // slate-800
-        particles: '#22d3ee', // cyan particles
-        particleGlow: '#06b6d4', // cyan glow
+        background: '#0f172a',
+        grid: 'rgba(6, 182, 212, 0.3)',
+        highlights: 'rgba(8, 145, 178, 0.2)',
+        particles: 'rgba(34, 211, 238, 0.6)',
+        particleGlow: 'rgba(6, 182, 212, 0.3)',
       }
-    };
+    })[dark ? 'dark' : 'light'];
 
-    const theme = isDark ? colors.dark : colors.light;
+    let colors = getColors(isDark);
 
-    // Grid parameters
-    const gridSize = 50;
-
-    // Highlight streaks
-    const highlights = [];
-    for (let i = 0; i < 3; i++) {
-      highlights.push({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        speed: 0.5 + Math.random() * 1,
-        opacity: 0.1 + Math.random() * 0.2,
-      });
-    }
-
-    // Glowing particles
-    const particles = [];
+    // ⚛️ Create particles (moved ABOVE resizeCanvas to fix ReferenceError)
     const createParticles = () => {
-      particles.length = 0;
+      if (!mounted) return;
+      const rect = canvas.getBoundingClientRect();
+      particlesRef.current = [];
+
       for (let i = 0; i < 100; i++) {
-        particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
+        particlesRef.current.push({
+          x: Math.random() * rect.width,
+          y: Math.random() * rect.height,
           vx: (Math.random() - 0.5) * 0.8,
           vy: (Math.random() - 0.5) * 0.8,
           size: Math.random() * 3 + 1,
@@ -75,120 +57,137 @@ const WaveGridBackground = () => {
       }
     };
 
-    createParticles();
+    // 🧭 Resize + scale canvas
+    const resizeCanvas = () => {
+      if (!mounted) return;
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform before scaling
+      ctx.scale(dpr, dpr);
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+
+      createParticles();
+    };
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // ⚡ Grid + highlights setup
+    const gridSize = 50;
+    const highlights = [];
+    for (let i = 0; i < 3; i++) {
+      highlights.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        speed: 0.5 + Math.random(),
+        opacity: 0.1 + Math.random() * 0.2,
+      });
+    }
 
     let animationFrame = 0;
 
-    // Animation loop
+    // 🎞️ Animation loop
     const animate = () => {
+      if (!mounted) return;
+
       animationFrame++;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const rect = canvas.getBoundingClientRect();
 
-      // Fill background
-      ctx.fillStyle = theme.background;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Background
+      ctx.fillStyle = colors.background;
+      ctx.fillRect(0, 0, rect.width, rect.height);
 
-      // Draw straight grid
-      ctx.strokeStyle = theme.grid;
-      ctx.lineWidth = 2;
+      // Grid
+      ctx.strokeStyle = colors.grid;
+      ctx.lineWidth = 1;
       ctx.globalAlpha = 0.6;
-
-      // Vertical lines (straight)
-      for (let x = 0; x <= canvas.width; x += gridSize) {
+      for (let x = 0; x <= rect.width; x += gridSize) {
         ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
+        ctx.lineTo(x, rect.height);
         ctx.stroke();
       }
-
-      // Horizontal lines (straight)
-      for (let y = 0; y <= canvas.height; y += gridSize) {
+      for (let y = 0; y <= rect.height; y += gridSize) {
         ctx.beginPath();
         ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
+        ctx.lineTo(rect.width, y);
         ctx.stroke();
       }
 
-      // Draw highlight streaks
+      // Highlights
       ctx.globalAlpha = 1;
       highlights.forEach((highlight) => {
-        ctx.strokeStyle = theme.highlights;
+        ctx.strokeStyle = colors.highlights;
         ctx.lineWidth = 2;
         ctx.globalAlpha = highlight.opacity;
 
         ctx.beginPath();
         ctx.moveTo(highlight.x, 0);
-        ctx.lineTo(highlight.x, canvas.height);
+        ctx.lineTo(highlight.x, rect.height);
         ctx.stroke();
 
-        // Move highlight
         highlight.x += highlight.speed;
-        if (highlight.x > canvas.width) {
+        if (highlight.x > rect.width) {
           highlight.x = 0;
           highlight.opacity = 0.1 + Math.random() * 0.2;
         }
       });
 
-      // Draw glowing particles
-      particles.forEach((particle) => {
-        // Calculate pulsing alpha
-        const pulseAlpha = particle.alpha * (0.7 + 0.3 * Math.sin(animationFrame * particle.pulseSpeed + particle.pulsePhase));
-        
-        // Draw glow effect
+      // Particles
+      particlesRef.current.forEach((particle) => {
+        const pulseAlpha =
+          particle.alpha *
+          (0.7 + 0.3 * Math.sin(animationFrame * particle.pulseSpeed + particle.pulsePhase));
+
+        // Glow gradient
         const gradient = ctx.createRadialGradient(
           particle.x, particle.y, 0,
           particle.x, particle.y, particle.size * 4
         );
-        gradient.addColorStop(0, theme.particles + Math.floor(pulseAlpha * 255).toString(16).padStart(2, '0'));
-        gradient.addColorStop(0.5, theme.particleGlow + Math.floor(pulseAlpha * 0.3 * 255).toString(16).padStart(2, '0'));
+        gradient.addColorStop(0, `rgba(255, 215, 0, ${pulseAlpha})`);
+        gradient.addColorStop(0.5, `rgba(255, 215, 0, ${pulseAlpha * 0.3})`);
         gradient.addColorStop(1, 'transparent');
-        
+
         ctx.fillStyle = gradient;
         ctx.globalAlpha = 1;
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size * 4, 0, Math.PI * 2);
         ctx.fill();
 
-        // Draw core particle
-        ctx.fillStyle = theme.particles;
+        // Core
+        ctx.fillStyle = colors.particles;
         ctx.globalAlpha = pulseAlpha;
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fill();
 
-        // Update particle position
+        // Movement + wrap
         particle.x += particle.vx;
         particle.y += particle.vy;
-
-        // Wrap around screen edges
-        if (particle.x < 0) particle.x = canvas.width;
-        if (particle.x > canvas.width) particle.x = 0;
-        if (particle.y < 0) particle.y = canvas.height;
-        if (particle.y > canvas.height) particle.y = 0;
+        if (particle.x < 0) particle.x = rect.width;
+        if (particle.x > rect.width) particle.x = 0;
+        if (particle.y < 0) particle.y = rect.height;
+        if (particle.y > rect.height) particle.y = 0;
       });
 
-      // Add depth shadows for dark mode
-      if (isDark) {
-        ctx.globalAlpha = 0.1;
-        ctx.fillStyle = theme.depth;
-
-        // Create subtle 3D effect
-        for (let i = 0; i < 5; i++) {
-          const offset = i * 2;
-          ctx.fillRect(offset, offset, canvas.width - offset * 2, canvas.height - offset * 2);
-        }
-      }
-
-      requestAnimationFrame(animate);
+      ctx.globalAlpha = 1;
+      animationRef.current = requestAnimationFrame(animate);
     };
 
     animate();
 
-    // Listen for theme changes and update smoothly
+    // 🌓 Theme watcher
     const observer = new MutationObserver(() => {
       const newIsDark = document.documentElement.classList.contains('dark');
       if (newIsDark !== isDark) {
         setIsDark(newIsDark);
+        colors = getColors(newIsDark);
+        createParticles(); // reinitialize with new colors
       }
     });
 
@@ -198,8 +197,10 @@ const WaveGridBackground = () => {
     });
 
     return () => {
+      mounted = false;
       window.removeEventListener('resize', resizeCanvas);
       observer.disconnect();
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [isDark]);
 
@@ -207,7 +208,11 @@ const WaveGridBackground = () => {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 w-full h-full -z-10"
-      style={{ pointerEvents: 'none' }}
+      style={{
+        pointerEvents: 'none',
+        width: '100%',
+        height: '100%',
+      }}
     />
   );
 };

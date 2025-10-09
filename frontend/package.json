@@ -45,7 +45,8 @@
     "shadcn-ui": "^0.9.5",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.12",
-    "tsparticles-engine": "^2.12.0"
+    "tsparticles-engine": "^2.12.0",
+    "tsparticles-slim": "^2.12.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

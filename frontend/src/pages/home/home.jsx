@@ -110,7 +110,7 @@ export default function HomePage() {
                 </div>
 
             </section>
-            <section id="features" className="py-24 lg:py-36 bg-muted/30 relative overflow-hidden">
+            <section id="features" className="py-24 lg:py-36 relative overflow-hidden">
                 {/* Theme-aware background */}
                 <div className="absolute inset-0 bg-gradient-to-b from-background via-muted/20 to-background"></div>
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_hsl(var(--primary)/0.1),_transparent_50%)]"></div>

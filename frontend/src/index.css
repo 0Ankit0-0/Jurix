@@ -647,7 +647,7 @@
     padding-right: env(safe-area-inset-right);
   }
 
-/* 
+/*
 .bg-grid-pattern {
   background-image:
     linear-gradient(to right, rgba(128, 128, 128, 0.1) 1px, transparent 1px),
@@ -676,7 +676,18 @@
   .text-responsive-xl {
     @apply text-xl sm:text-2xl lg:text-3xl;
   }
+canvas {
+  transition: none !important;
+}
 
+.fixed {
+  position: fixed !important;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
   /* Fluid responsive spacing */
   .space-responsive {
     @apply space-y-4 sm:space-y-6 lg:space-y-8;
