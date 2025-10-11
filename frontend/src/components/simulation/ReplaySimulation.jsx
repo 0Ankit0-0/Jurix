@@ -48,19 +48,35 @@ const ReplaySimulation = () => {
   const handleDownloadReport = async () => {
     try {
       const response = await simulationAPI.getReport(caseId);
-      const blob = new Blob([response.data], { type: "application/pdf" });
+      let blob;
+      let filename = `simulation_report_${caseId}.pdf`;
+      let mimetype = 'application/pdf';
+
+      if (response.data instanceof Blob) {
+        blob = response.data;
+        // Check content type
+        if (response.data.type === 'text/plain') {
+          mimetype = 'text/plain';
+          filename = `simulation_report_${caseId}.txt`;
+        }
+      } else {
+        // Fallback for non-blob (shouldn't happen with updated api.js)
+        blob = new Blob([response.data], { type: 'application/pdf' });
+      }
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `simulation_report_${caseId}.pdf`);
+      link.setAttribute("download", filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success("Report downloaded successfully");
+      toast.success(`Report downloaded as ${filename}`);
     } catch (error) {
       console.error("Error downloading report:", error);
-      toast.error("Failed to download report");
+      const errorMsg = error.response?.data?.error || error.message || "Failed to download report";
+      toast.error(errorMsg);
     }
   };
 

@@ -138,7 +138,27 @@ export const simulationAPI = {
   },
   getResults: (caseId) => api.get(`/simulation/results/${caseId}`),
   getStatus: (caseId) => api.get(`/simulation/status/${caseId}`),
-  getReport: (caseId) => api.get(`/simulation/report/${caseId}`, { responseType: 'blob' }),
+  getReport: async (caseId) => {
+    try {
+      const response = await api.get(`/simulation/report/${caseId}`, { responseType: 'blob' });
+      return response;
+    } catch (error) {
+      // If blob fails, try JSON response for error message
+      if (error.response?.data instanceof Blob) {
+        // It's a blob, but might be text error
+        const text = await error.response.data.text();
+        try {
+          const jsonError = JSON.parse(text);
+          throw new Error(jsonError.error || 'Failed to generate report');
+        } catch {
+          // Not JSON, treat as text file
+          const blob = new Blob([text], { type: 'text/plain' });
+          return { data: blob };
+        }
+      }
+      throw error;
+    }
+  },
   healthCheck: () => retryRequest(() => api.get("/simulation/health"), 3, 1000),
 };
 

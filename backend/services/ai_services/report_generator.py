@@ -2,6 +2,62 @@
 
 from datetime import datetime
 import os
+import re
+
+def format_transcript_for_report(transcript):
+    """Format transcript with proper structure and indentation"""
+    lines = transcript.split('\n')
+    formatted_lines = []
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Skip empty lines
+        if not stripped:
+            formatted_lines.append('')
+            continue
+        
+        # Format section headers
+        if stripped.startswith('='):
+            formatted_lines.append(stripped)
+            continue
+        
+        # Format thinking process markers with indentation
+        thinking_match = re.match(r'^(■+)\s*(.+)$', stripped)
+        if thinking_match:
+            level = len(thinking_match.group(1))
+            content = thinking_match.group(2)
+            indent = '  ' * (level - 1)
+            formatted_lines.append(f'{indent}💭 {content}')
+            continue
+        
+        # Format speaker lines
+        speaker_match = re.match(r'^(JUDGE|PROSECUTOR|DEFENSE|COURT|WITNESS):\s*(.+)$', stripped, re.IGNORECASE)
+        if speaker_match:
+            speaker = speaker_match.group(1).upper()
+            content = speaker_match.group(2)
+            formatted_lines.append('')
+            formatted_lines.append(f'[{speaker}]')
+            formatted_lines.append(f'  {content}')
+            continue
+        
+        # Format section titles (all caps)
+        if stripped == stripped.upper() and len(stripped) > 5 and ':' not in stripped:
+            formatted_lines.append('')
+            formatted_lines.append(f'━━━ {stripped} ━━━')
+            formatted_lines.append('')
+            continue
+        
+        # Format bullet points
+        if re.match(r'^[-*•]\s+', stripped):
+            formatted_lines.append(f'  {stripped}')
+            continue
+        
+        # Regular text
+        formatted_lines.append(stripped)
+    
+    return '\n'.join(formatted_lines)
+
 
 def generate_simulation_report(case_data, simulation_results, output_path):
     """Generate a comprehensive PDF report of the court simulation"""
@@ -12,17 +68,18 @@ def generate_simulation_report(case_data, simulation_results, output_path):
         from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER
-    except ImportError:
+    except ImportError as e:
+        print(f"⚠️ Reportlab import failed: {e}. Falling back to text report.")
         # Fallback to text report if reportlab not available
         text_path = output_path.replace('.pdf', '.txt')
-        with open(text_path, 'w') as f:
+        with open(text_path, 'w', encoding='utf-8') as f:
             # Use the specified format
-            f.write("🧾 Courtroom Simulation Report Format\n")
+            f.write("🧾 Courtroom Simulation Report\n")
             f.write("=" * 80 + "\n\n")
 
             # 1. Case Metadata
             f.write("1. Case Metadata\n")
-            f.write("-" * 40 + "\n")
+            f.write("-" * 80 + "\n")
             f.write(f"• Case ID: {simulation_results.get('simulation_id', 'N/A')}\n")
             f.write(f"• Case Title: {case_data.get('title', '')}\n")
             f.write(f"• Submitted By: {case_data.get('user_id', 'N/A')}\n")
@@ -31,10 +88,10 @@ def generate_simulation_report(case_data, simulation_results, output_path):
 
             # 2. Case Summary
             f.write("2. Case Summary\n")
-            f.write("-" * 40 + "\n")
+            f.write("-" * 80 + "\n")
             f.write(f"• Case Type: {case_data.get('case_type', '')}\n")
             f.write(f"• Brief Facts: {case_data.get('description', '')}\n")
-            f.write("• Applicable Laws / Sections: N/A\n")  # Would need legal analysis
+            f.write("• Applicable Laws / Sections: N/A\n")
             f.write("• Key Evidences:\n")
             for i, ev in enumerate(case_data.get('evidence_files', []), 1):
                 f.write(f"  - Exhibit {chr(64+i)} ({ev.get('title', '')}): {ev.get('summary', '')}\n")
@@ -42,10 +99,10 @@ def generate_simulation_report(case_data, simulation_results, output_path):
 
             # 3. Simulation Overview
             f.write("3. Simulation Overview\n")
-            f.write("-" * 40 + "\n")
+            f.write("-" * 80 + "\n")
             f.write(f"• Simulation Mode: {simulation_results.get('simulation_type', 'N/A')}\n")
             f.write("• Participants:\n")
-            f.write("  - Prosecutor Agent: PoseCuteAgent\n")
+            f.write("  - Prosecutor Agent: ProsecutorAgent\n")
             f.write("  - Defense Agent: DefenseAgent\n")
             f.write("  - Judge Agent: JudgeAgent\n")
             f.write(f"• AI Model Used: {simulation_results.get('simulation_type', 'N/A')}\n")
@@ -53,13 +110,16 @@ def generate_simulation_report(case_data, simulation_results, output_path):
 
             # 4. Transcript of Proceedings
             f.write("4. Transcript of Proceedings\n")
-            f.write("-" * 40 + "\n")
+            f.write("=" * 80 + "\n\n")
+            
+            # Format transcript with proper structure
             transcript = simulation_results.get('simulation_text', '')
-            f.write(transcript + "\n\n")
+            formatted_transcript = format_transcript_for_report(transcript)
+            f.write(formatted_transcript + "\n\n")
 
             # 5. Judge's Final Judgment
-            f.write("5. Judge's Final Judgment\n")
-            f.write("-" * 40 + "\n")
+            f.write("\n5. Judge's Final Judgment\n")
+            f.write("-" * 80 + "\n")
             # Extract judgment from transcript
             judgment = "Verdict not found in transcript"
             if "guilty" in transcript.lower():
@@ -71,34 +131,38 @@ def generate_simulation_report(case_data, simulation_results, output_path):
 
             # 6. Summary of Arguments
             f.write("6. Summary of Arguments\n")
-            f.write("-" * 40 + "\n")
-            f.write("| Agent      | Argument Strength | Key Highlights |\n")
-            f.write("| ---------- | ----------------- | -------------- |\n")
-            f.write("| Prosecutor | 0.85              | Strong forensic linkage |\n")
-            f.write("| Defense    | 0.72              | Highlighted contradictions |\n")
-            f.write("| Judge      | 0.90              | Balanced reasoning |\n\n")
+            f.write("-" * 80 + "\n")
+            f.write("┌────────────┬───────────────────┬──────────────────────────────┐\n")
+            f.write("│ Agent      │ Argument Strength │ Key Highlights               │\n")
+            f.write("├────────────┼───────────────────┼──────────────────────────────┤\n")
+            f.write("│ Prosecutor │ Strong            │ Evidence-based arguments     │\n")
+            f.write("│ Defense    │ Strong            │ Counter-arguments presented  │\n")
+            f.write("│ Judge      │ Balanced          │ Fair and impartial reasoning │\n")
+            f.write("└────────────┴───────────────────┴──────────────────────────────┘\n\n")
 
             # 7. Legal References & Citations
             f.write("7. Legal References & Citations\n")
-            f.write("-" * 40 + "\n")
+            f.write("-" * 80 + "\n")
             f.write("[1] Applicable laws based on case type\n\n")
 
             # 8. System Metadata
             f.write("8. System Metadata\n")
-            f.write("-" * 40 + "\n")
+            f.write("-" * 80 + "\n")
             f.write("• Model Version: v1.0-beta\n")
             f.write("• Dataset: IPC, CrPC, Constitution\n")
             f.write(f"• Simulation Duration: {simulation_results.get('processing_time', 'N/A')}\n")
-            f.write("• Backend Framework: Flask\n")
-            f.write("• Frontend: React + Tailwind\n")
+            f.write("• Backend Framework: Flask + SocketIO\n")
+            f.write("• Frontend: React + Tailwind CSS\n")
             f.write(f"• Timestamp: {datetime.now().isoformat()}\n\n")
 
             # 9. Output Format
             f.write("9. Output Format\n")
-            f.write("-" * 40 + "\n")
+            f.write("-" * 80 + "\n")
             f.write("• PDF: For readable presentation\n")
-            f.write("• DOCX: For editable version\n")
+            f.write("• TXT: For plain text version\n")
             f.write("• JSON: For internal replay\n")
+            f.write("\n" + "=" * 80 + "\n")
+            f.write("End of Report\n")
         return text_path
 
     doc = SimpleDocTemplate(
@@ -127,7 +191,7 @@ def generate_simulation_report(case_data, simulation_results, output_path):
     elements = []
 
     # Title
-    title = Paragraph("🧾 Courtroom Simulation Report Format", styles['Center'])
+    title = Paragraph("🧾 Courtroom Simulation Report", styles['Center'])
     elements.append(title)
     elements.append(Spacer(1, 12))
 
@@ -166,7 +230,7 @@ def generate_simulation_report(case_data, simulation_results, output_path):
     elements.append(Spacer(1, 12))
     elements.append(Paragraph(f"Simulation Mode: {simulation_results.get('simulation_type', 'N/A')}", styles['Normal']))
     elements.append(Paragraph("Participants:", styles['Normal']))
-    elements.append(Paragraph("  - Prosecutor Agent: PoseCuteAgent", styles['Normal']))
+    elements.append(Paragraph("  - Prosecutor Agent: ProsecutorAgent", styles['Normal']))
     elements.append(Paragraph("  - Defense Agent: DefenseAgent", styles['Normal']))
     elements.append(Paragraph("  - Judge Agent: JudgeAgent", styles['Normal']))
     elements.append(Paragraph(f"AI Model Used: {simulation_results.get('simulation_type', 'N/A')}", styles['Normal']))
@@ -177,6 +241,9 @@ def generate_simulation_report(case_data, simulation_results, output_path):
     elements.append(Paragraph("4. Transcript of Proceedings", styles['Heading1']))
     elements.append(Spacer(1, 12))
     transcript = simulation_results.get('simulation_text', '')
+    # Truncate long transcripts to prevent PDF overflow
+    if len(transcript) > 5000:
+        transcript = transcript[:5000] + "... (truncated for report)"
     elements.append(Paragraph(transcript, styles['Normal']))
     elements.append(Spacer(1, 20))
 
@@ -197,9 +264,9 @@ def generate_simulation_report(case_data, simulation_results, output_path):
     elements.append(Spacer(1, 12))
     arguments_data = [
         ["Agent", "Argument Strength", "Key Highlights"],
-        ["Prosecutor", "0.85", "Strong forensic linkage"],
-        ["Defense", "0.72", "Highlighted contradictions"],
-        ["Judge", "0.90", "Balanced reasoning"]
+        ["Prosecutor", "Strong", "Evidence-based arguments"],
+        ["Defense", "Strong", "Counter-arguments presented"],
+        ["Judge", "Balanced", "Fair and impartial reasoning"]
     ]
     arguments_table = Table(arguments_data, colWidths=[100, 120, 250])
     arguments_table.setStyle(TableStyle([
@@ -222,8 +289,8 @@ def generate_simulation_report(case_data, simulation_results, output_path):
     elements.append(Paragraph("Model Version: v1.0-beta", styles['Normal']))
     elements.append(Paragraph("Dataset: IPC, CrPC, Constitution", styles['Normal']))
     elements.append(Paragraph(f"Simulation Duration: {simulation_results.get('processing_time', 'N/A')}", styles['Normal']))
-    elements.append(Paragraph("Backend Framework: Flask", styles['Normal']))
-    elements.append(Paragraph("Frontend: React + Tailwind", styles['Normal']))
+    elements.append(Paragraph("Backend Framework: Flask + SocketIO", styles['Normal']))
+    elements.append(Paragraph("Frontend: React + Tailwind CSS", styles['Normal']))
     elements.append(Paragraph(f"Timestamp: {datetime.now().isoformat()}", styles['Normal']))
     elements.append(Spacer(1, 20))
 
@@ -231,7 +298,7 @@ def generate_simulation_report(case_data, simulation_results, output_path):
     elements.append(Paragraph("9. Output Format", styles['Heading1']))
     elements.append(Spacer(1, 12))
     elements.append(Paragraph("PDF: For readable presentation", styles['Normal']))
-    elements.append(Paragraph("DOCX: For editable version", styles['Normal']))
+    elements.append(Paragraph("TXT: For plain text version", styles['Normal']))
     elements.append(Paragraph("JSON: For internal replay", styles['Normal']))
 
     # Generate PDF

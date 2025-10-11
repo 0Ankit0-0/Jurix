@@ -94,19 +94,21 @@ class VisionService:
                 
                 # Use smaller BLIP-2 model for faster inference
                 model_name = "Salesforce/blip2-opt-2.7b"  # Smaller, faster model
-                
+
                 # Determine device
                 self.device = "cuda" if torch.cuda.is_available() else "cpu"
                 logging.info(f"📱 Using device: {self.device}")
-                
+                if self.device == "cpu":
+                    logging.warning("⚠️ GPU not available. Using CPU for BLIP-2, which may be slow. Consider installing CUDA-enabled PyTorch.")
+
                 # Load processor and model
-                self.blip2_processor = Blip2Processor.from_pretrained(model_name)
+                self.blip2_processor = Blip2Processor.from_pretrained(model_name, use_fast=True)
                 self.blip2_model = Blip2ForConditionalGeneration.from_pretrained(
                     model_name,
-                    torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
+                    dtype=torch.float16 if self.device == "cuda" else torch.float32
                 )
                 self.blip2_model.to(self.device)
-                
+
                 load_time = time.time() - start_time
                 logging.info(f"✅ BLIP-2 model loaded in {load_time:.2f}s")
                 return True

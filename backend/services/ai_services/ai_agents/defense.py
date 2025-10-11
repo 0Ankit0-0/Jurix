@@ -247,6 +247,30 @@ class DefenseAgent(BaseAgent):
         ]
         return random.choice(closings)
     
+    def make_rebuttal_argument(self, case_summary: str) -> str:
+        """Deliver rebuttal argument addressing prosecution's closing"""
+        self.think("Preparing rebuttal argument to reinforce reasonable doubt", "rebuttal")
+
+        prompt = f"""
+        Deliver a rebuttal argument as a defense attorney addressing the prosecution's closing argument:
+
+        Case Summary: {case_summary}
+
+        Defense Theory: {self.defense_strategy.get('main_theory', 'Client is innocent')}
+
+        Your rebuttal should:
+        1. Address prosecution's final arguments and create counter-doubt
+        2. Re-emphasize reasonable doubt that cannot be overcome
+        3. Challenge prosecution's interpretation of evidence
+        4. Reinforce the presumption of innocence
+        5. End with a final plea for acquittal
+
+        Be passionate and focus on protecting your client's rights. Use phrases like "The prosecution asks you to ignore..." but "you must consider the reasonable doubt..."
+        Keep it focused and compelling.
+        """
+
+        return self.respond(prompt, "defense rebuttal argument")
+
     def _get_cross_examination_response(self) -> str:
         """Enhanced cross-examination fallback"""
         responses = [

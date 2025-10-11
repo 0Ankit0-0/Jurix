@@ -12,7 +12,7 @@ import { SkeletonDashboard } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
-import CaseUploadBackground from "@/components/ui/CaseUploadBackground";
+// import CaseUploadBackground from "@/components/ui/CaseUploadBackground";
 
 import {
   FileText,
@@ -228,11 +228,6 @@ export default function Dashboard({ userName }) {
       const response = await caseAPI.getById(caseId);
       const caseData = response.data.case; // Corrected line
 
-      if (caseData.simulation_results) {
-        navigate(`/simulation/replay/${caseData.case_id}`);
-        return;
-      }
-
       // Start the simulation for all cases (private and public)
       toast.loading("Starting simulation...", { id: 'sim' });
       await simulationAPI.start(caseId);
@@ -295,7 +290,7 @@ export default function Dashboard({ userName }) {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <CaseUploadBackground />
+      {/* <CaseUploadBackground /> */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Enhanced Header */}
         <div className="flex flex-col items-center justify-center text-center mb-12">

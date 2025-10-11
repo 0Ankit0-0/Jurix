@@ -283,14 +283,15 @@ def run_agent_simulation(case_id: str, case_data: Dict[str, Any], evidence_analy
             defense_open = defense_future.result()
 
         # Judge opening turn
-        socketio.emit('thinking', {'role': 'Judge', 'message': 'Reviewing case details and preparing to open court...'}, room=case_id)
+        thinking_text = 'Reviewing case details and preparing to open court...'
+        socketio.emit('thinking', {'role': 'Judge', 'message': thinking_text}, room=case_id)
         time.sleep(0.5)
         turn = {
             'turn_number': turn_number,
             'role': 'Judge',
             'message': judge_open,
             'timestamp': "09:00:00",
-            'thinking_process': judge.get_thinking_process()[-1]['thought'] if judge.get_thinking_process() else ""
+            'thinking_process': judge.get_thinking_process()[-1]['thought'] if judge.get_thinking_process() else thinking_text
         }
         turns.append(turn)
         socketio.emit('turn', turn, room=case_id)
@@ -300,14 +301,15 @@ def run_agent_simulation(case_id: str, case_data: Dict[str, Any], evidence_analy
         transcript.append(f"JUDGE: {judge_open}\n")
 
         # Prosecutor opening turn
-        socketio.emit('thinking', {'role': 'Prosecutor', 'message': 'Analyzing evidence and preparing opening statement...'}, room=case_id)
+        thinking_text = 'Analyzing evidence and preparing opening statement...'
+        socketio.emit('thinking', {'role': 'Prosecutor', 'message': thinking_text}, room=case_id)
         time.sleep(0.5)
         turn = {
             'turn_number': turn_number,
             'role': 'Prosecutor',
             'message': prosecutor_open,
             'timestamp': f"09:{turn_number:02d}:00",
-            'thinking_process': prosecutor.get_thinking_process()[-1]['thought'] if prosecutor.get_thinking_process() else ""
+            'thinking_process': prosecutor.get_thinking_process()[-1]['thought'] if prosecutor.get_thinking_process() else thinking_text
         }
         turns.append(turn)
         socketio.emit('turn', turn, room=case_id)
@@ -319,14 +321,15 @@ def run_agent_simulation(case_id: str, case_data: Dict[str, Any], evidence_analy
         transcript.append("")
 
         # Defense opening turn
-        socketio.emit('thinking', {'role': 'Defense', 'message': 'Preparing defense strategy and counter-arguments...'}, room=case_id)
+        thinking_text = 'Preparing defense strategy and counter-arguments...'
+        socketio.emit('thinking', {'role': 'Defense', 'message': thinking_text}, room=case_id)
         time.sleep(0.5)
         turn = {
             'turn_number': turn_number,
             'role': 'Defense',
             'message': defense_open,
             'timestamp': f"09:{turn_number:02d}:00",
-            'thinking_process': defense.get_thinking_process()[-1]['thought'] if defense.get_thinking_process() else ""
+            'thinking_process': defense.get_thinking_process()[-1]['thought'] if defense.get_thinking_process() else thinking_text
         }
         turns.append(turn)
         socketio.emit('turn', turn, room=case_id)
@@ -350,14 +353,15 @@ def run_agent_simulation(case_id: str, case_data: Dict[str, Any], evidence_analy
                 cross = cross_future.result()
 
             # Prosecutor evidence turn
-            socketio.emit('thinking', {'role': 'Prosecutor', 'message': f'Preparing to present evidence: {ev.get("title")}'}, room=case_id)
+            thinking_text = f'Preparing to present evidence: {ev.get("title")}'
+            socketio.emit('thinking', {'role': 'Prosecutor', 'message': thinking_text}, room=case_id)
             time.sleep(0.5)
             turn = {
                 'turn_number': turn_number,
                 'role': 'Prosecutor',
                 'message': pres,
                 'timestamp': f"09:{turn_number:02d}:00",
-                'thinking_process': prosecutor.get_thinking_process()[-1]['thought'] if prosecutor.get_thinking_process() else ""
+                'thinking_process': prosecutor.get_thinking_process()[-1]['thought'] if prosecutor.get_thinking_process() else thinking_text
             }
             turns.append(turn)
             socketio.emit('turn', turn, room=case_id)
@@ -365,14 +369,15 @@ def run_agent_simulation(case_id: str, case_data: Dict[str, Any], evidence_analy
             turn_number += 1
 
             # Defense cross-examination turn
-            socketio.emit('thinking', {'role': 'Defense', 'message': f'Preparing cross-examination for {ev.get("title")}'}, room=case_id)
+            thinking_text = f'Preparing cross-examination for {ev.get("title")}'
+            socketio.emit('thinking', {'role': 'Defense', 'message': thinking_text}, room=case_id)
             time.sleep(0.5)
             turn = {
                 'turn_number': turn_number,
                 'role': 'Defense',
                 'message': cross,
                 'timestamp': f"09:{turn_number:02d}:00",
-                'thinking_process': defense.get_thinking_process()[-1]['thought'] if defense.get_thinking_process() else ""
+                'thinking_process': defense.get_thinking_process()[-1]['thought'] if defense.get_thinking_process() else thinking_text
             }
             turns.append(turn)
             socketio.emit('turn', turn, room=case_id)
@@ -395,14 +400,15 @@ def run_agent_simulation(case_id: str, case_data: Dict[str, Any], evidence_analy
             defense_close = defense_close_future.result()
 
         # Prosecutor closing turn
-        socketio.emit('thinking', {'role': 'Prosecutor', 'message': 'Preparing closing argument...'}, room=case_id)
+        thinking_text = 'Preparing closing argument...'
+        socketio.emit('thinking', {'role': 'Prosecutor', 'message': thinking_text}, room=case_id)
         time.sleep(0.5)
         turn = {
             'turn_number': turn_number,
             'role': 'Prosecutor',
             'message': prosecutor_close,
             'timestamp': f"09:{turn_number:02d}:00",
-            'thinking_process': prosecutor.get_thinking_process()[-1]['thought'] if prosecutor.get_thinking_process() else ""
+            'thinking_process': prosecutor.get_thinking_process()[-1]['thought'] if prosecutor.get_thinking_process() else thinking_text
         }
         turns.append(turn)
         socketio.emit('turn', turn, room=case_id)
@@ -410,14 +416,15 @@ def run_agent_simulation(case_id: str, case_data: Dict[str, Any], evidence_analy
         turn_number += 1
 
         # Defense closing turn
-        socketio.emit('thinking', {'role': 'Defense', 'message': 'Preparing closing argument...'}, room=case_id)
+        thinking_text = 'Preparing closing argument...'
+        socketio.emit('thinking', {'role': 'Defense', 'message': thinking_text}, room=case_id)
         time.sleep(0.5)
         turn = {
             'turn_number': turn_number,
             'role': 'Defense',
             'message': defense_close,
             'timestamp': f"09:{turn_number:02d}:00",
-            'thinking_process': defense.get_thinking_process()[-1]['thought'] if defense.get_thinking_process() else ""
+            'thinking_process': defense.get_thinking_process()[-1]['thought'] if defense.get_thinking_process() else thinking_text
         }
         turns.append(turn)
         socketio.emit('turn', turn, room=case_id)
@@ -427,6 +434,58 @@ def run_agent_simulation(case_id: str, case_data: Dict[str, Any], evidence_analy
         transcript.append("PROSECUTOR: " + prosecutor_close)
         transcript.append("DEFENSE: " + defense_close)
         transcript.append("")
+
+        # Additional debate rounds to reach minimum turns (10) and cap at maximum (35)
+        min_turns = 10
+        max_turns = 35
+
+        # Continue with rebuttal arguments if we haven't reached minimum turns
+        while turn_number < min_turns - 1 and turn_number < max_turns - 1:  # -1 because judge decision is separate
+            socketio.emit('simulation_progress', {'step': f'Continuing debate (turn {turn_number + 1})', 'progress': min(85, 60 + (turn_number - 6) * 5)}, room=case_id)
+
+            # Prosecutor rebuttal
+            thinking_text = 'Preparing rebuttal argument...'
+            socketio.emit('thinking', {'role': 'Prosecutor', 'message': thinking_text}, room=case_id)
+            time.sleep(0.5)
+            prosecutor_rebuttal = prosecutor.make_rebuttal_argument(summary_line)
+            turn = {
+                'turn_number': turn_number,
+                'role': 'Prosecutor',
+                'message': prosecutor_rebuttal,
+                'timestamp': f"09:{turn_number:02d}:00",
+                'thinking_process': prosecutor.get_thinking_process()[-1]['thought'] if prosecutor.get_thinking_process() else thinking_text
+            }
+            turns.append(turn)
+            socketio.emit('turn', turn, room=case_id)
+            time.sleep(0.5)
+            turn_number += 1
+
+            transcript.append(f"PROSECUTOR (Rebuttal): {prosecutor_rebuttal}")
+
+            if turn_number >= max_turns - 1:
+                break
+
+            # Defense rebuttal
+            thinking_text = 'Preparing rebuttal argument...'
+            socketio.emit('thinking', {'role': 'Defense', 'message': thinking_text}, room=case_id)
+            time.sleep(0.5)
+            defense_rebuttal = defense.make_rebuttal_argument(summary_line)
+            turn = {
+                'turn_number': turn_number,
+                'role': 'Defense',
+                'message': defense_rebuttal,
+                'timestamp': f"09:{turn_number:02d}:00",
+                'thinking_process': defense.get_thinking_process()[-1]['thought'] if defense.get_thinking_process() else thinking_text
+            }
+            turns.append(turn)
+            socketio.emit('turn', turn, room=case_id)
+            time.sleep(0.5)
+            turn_number += 1
+
+            transcript.append(f"DEFENSE (Rebuttal): {defense_rebuttal}")
+
+            if turn_number >= max_turns - 1:
+                break
 
         # Judge decision
         socketio.emit('simulation_progress', {'step': 'Final judgment', 'progress': 90}, room=case_id)
@@ -466,7 +525,7 @@ def run_agent_simulation(case_id: str, case_data: Dict[str, Any], evidence_analy
             "transcript": "\n".join(transcript),
             "turns": turns,
             "thinking_processes": thinking,
-            "meta": {"provider": "local_agents_parallel"},
+            "meta": {"provider": "local_agents"},
         }
 
     except Exception as e:
@@ -483,14 +542,16 @@ def start_courtroom_simulation(case_id: str):
         return "", 200
 
     try:
-        print(f"🚀 Request to start simulation for case: {case_id}")
+        print(f"[START] 🚀 Request to start simulation for case: {case_id}")
         case = get_case_by_id(case_id)
         if not case:
+            print(f"[ERROR] Case {case_id} not found")
             return jsonify({"error": "Case not found"}), 404
 
         # Allow simulation start from more states
         allowed_states = ["ready_for_simulation", "draft", "evidence_uploaded"]
         if case.get("status") not in allowed_states:
+            print(f"[ERROR] Case status '{case.get('status')}' not allowed. Allowed: {allowed_states}")
             return (
                 jsonify(
                     {
@@ -502,6 +563,7 @@ def start_courtroom_simulation(case_id: str):
                 400,
             )
 
+        print(f"[STEP 1] Initializing progress tracking for case {case_id}")
         # Initialize progress tracking
         update_case(case_id, {
             "simulation_results": {
@@ -512,7 +574,7 @@ def start_courtroom_simulation(case_id: str):
         })
 
         # Step 1: analyze evidence (if any)
-        print("🔍 Step 1/4: Analyzing evidence files...")
+        print("🔍 [STEP 2] Analyzing evidence files...")
         update_case(case_id, {
             "simulation_results.status": "processing",
             "simulation_results.progress": 10,
@@ -521,50 +583,56 @@ def start_courtroom_simulation(case_id: str):
         evidence_analysis = []
         try:
             if case.get('has_evidence', False):  # Check if case was created with evidence flag
+                print(f"[STEP 2.1] Case has evidence flag, analyzing evidence for {case_id}")
                 evidence_analysis = analyze_case_evidence(case_id)
                 if isinstance(evidence_analysis, str):
                     if "No evidence files found" in evidence_analysis:
-                        print("ℹ️ No evidence files to analyze")
+                        print("ℹ️ [INFO] No evidence files to analyze")
                         evidence_analysis = []  # Set to empty list for no evidence
                     else:
+                        print(f"[ERROR] Evidence analysis error: {evidence_analysis}")
                         return jsonify({"error": evidence_analysis}), 400
                 else:
-                    print(f"📊 Found {len(evidence_analysis)} evidence files to analyze")
+                    print(f"📊 [SUCCESS] Found {len(evidence_analysis)} evidence files to analyze")
             else:
-                print("ℹ️ Case marked as no evidence required")
+                print("ℹ️ [INFO] Case marked as no evidence required")
                 evidence_analysis = []  # Ensure it's an empty list
         except Exception as e:
-            print(f"❌ Evidence analysis failed: {e}")
+            print(f"❌ [ERROR] Evidence analysis failed: {e}")
             return jsonify({"error": f"Failed to analyze evidence: {str(e)}"}), 500
 
         # Step 2: Try local agent simulation first
-        print("🤖 Step 2/4: Running AI agent simulation...")
+        print("🤖 [STEP 3] Running AI agent simulation...")
         update_case(case_id, {
             "simulation_results.status": "processing",
             "simulation_results.progress": 40,
             "simulation_results.step": 1 if evidence_analysis else 0
         })
         try:
+            print(f"[STEP 3.1] Attempting local agent simulation for {case_id}")
             sim_out = run_agent_simulation(case_id, case, evidence_analysis)
             simulation_type = sim_out.get("meta", {}).get("provider", "local_agents")
-            print(f"✅ Agent simulation completed using {simulation_type}")
+            print(f"✅ [SUCCESS] Agent simulation completed using {simulation_type}")
         except Exception as e_agent:
-            print("⚠️ Agent simulation failed, falling back to OpenAI:", e_agent)
+            print(f"⚠️ [WARNING] Agent simulation failed, falling back to OpenAI: {e_agent}")
             # Step 3: Try OpenAI GPT fallback
-            print("🔄 Step 3/4: Attempting OpenAI simulation...")
+            print("🔄 [STEP 4] Attempting OpenAI simulation...")
             try:
+                print(f"[STEP 4.1] Generating OpenAI simulation for {case_id}")
                 openai_out = generate_openai_simulation(case_id, case, evidence_analysis)
                 sim_out = {"transcript": openai_out["transcript"], "thinking_processes": {}, "meta": openai_out.get("meta", {})}
                 simulation_type = "openai"
+                print(f"✅ [SUCCESS] OpenAI simulation completed")
             except Exception as e_openai:
-                print("⚠️ OpenAI fallback failed, using static fallback:", e_openai)
-                print("📝 Step 4/4: Generating static simulation...")
+                print(f"⚠️ [WARNING] OpenAI fallback failed, using static fallback: {e_openai}")
+                print("📝 [STEP 5] Generating static simulation...")
                 sim_out = generate_static_fallback(case_id, case, evidence_analysis)
                 sim_out.setdefault("thinking_processes", {})
                 simulation_type = "static_fallback"
-                print("✅ Static simulation generated")
+                print("✅ [SUCCESS] Static simulation generated")
 
         # Update progress before final processing
+        print(f"[STEP 6] Updating progress before final processing for {case_id}")
         update_case(case_id, {
             "simulation_results.status": "processing",
             "simulation_results.progress": 70,
@@ -572,16 +640,21 @@ def start_courtroom_simulation(case_id: str):
         })
 
         # Step 4: Save simulation results into the case
+        print(f"[STEP 7] Preparing simulation results for saving")
         simulation_id = f"SIM_{case_id}_{int(datetime.utcnow().timestamp())}"
         transcript = sim_out.get("transcript")
+        print(f"[STEP 7.1] Simulation ID: {simulation_id}, transcript length: {len(transcript) if transcript else 0}")
 
         # Get turns - either from live simulation or parse transcript
         if 'turns' in sim_out:
             turns = sim_out['turns']
+            print(f"[STEP 7.2] Using live turns: {len(turns)} turns")
         else:
             turns = parse_simulation_into_turns(transcript)
-        
+            print(f"[STEP 7.3] Parsed turns from transcript: {len(turns)} turns")
+
         # Update progress
+        print(f"[STEP 8] Updating progress to 85%")
         update_case(case_id, {
             "simulation_results.status": "processing",
             "simulation_results.progress": 85,
@@ -620,10 +693,11 @@ def start_courtroom_simulation(case_id: str):
             
             # Validate turns format
             for turn in results['turns']:
-                required_turn_fields = {'turn_number', 'role', 'message', 'timestamp', 'duration'}
+                required_turn_fields = {'turn_number', 'role', 'message', 'timestamp'}
                 missing_fields = required_turn_fields - set(turn.keys())
                 if missing_fields:
                     return False, f"Turn missing required fields: {missing_fields}"
+                # Duration is optional, default added elsewhere
             
             # Additional validation rules
             if not results['simulation_text'].strip():
@@ -663,35 +737,39 @@ def start_courtroom_simulation(case_id: str):
         for turn in turns:
             turn_with_thinking = {
                 **turn,
-                "thinking_process": sim_out.get("thinking_processes", {}).get(turn["role"], "")
+                "thinking_process": sim_out.get("thinking_processes", {}).get(turn["role"], ""),
+                "duration": turn.get("duration", 3000)  # Default 3 seconds if missing
             }
             simulation_results["turns"].append(turn_with_thinking)
         
         # Try to generate detailed report using EnhancedReportGenerator
+        print(f"[STEP 9] Attempting to generate detailed report")
         detailed_report = None
         try:
             from services.document_Service.report_generator import EnhancedReportGenerator
             generator = EnhancedReportGenerator()
             detailed_report = generator.generate_comprehensive_report(case, simulation_results)
-            print("✅ Detailed report generated successfully")
+            print("✅ [SUCCESS] Detailed report generated successfully")
         except Exception as e:
-            print(f"⚠️ Detailed report generation failed: {e}")
+            print(f"⚠️ [WARNING] Detailed report generation failed: {e}")
             detailed_report = None
 
         # Try to generate PDF report if reportlab is available
+        print(f"[STEP 10] Attempting to generate PDF report")
         pdf_path = None
         try:
             from services.ai_services.report_generator import generate_simulation_report
             pdf_filename = f"simulation_{simulation_id}.pdf"
-            pdf_path = os.path.join(os.path.dirname(__file__), "..", "reports", pdf_filename)
+            pdf_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "reports", pdf_filename))
             os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
-            generate_simulation_report(case, simulation_results, pdf_path)
-            print("✅ PDF report generated successfully")
+            actual_path = generate_simulation_report(case, simulation_results, pdf_path)
+            pdf_path = actual_path  # Use returned path
+            print("✅ [SUCCESS] PDF report generated successfully")
         except ImportError as e:
-            print(f"⚠️ PDF generation skipped: {e}")
+            print(f"⚠️ [WARNING] PDF generation skipped: {e}")
             pdf_path = None
         except Exception as e:
-            print(f"⚠️ PDF generation failed: {e}")
+            print(f"⚠️ [WARNING] PDF generation failed: {e}")
             pdf_path = None
         
         # Prepare simulation document
@@ -704,28 +782,35 @@ def start_courtroom_simulation(case_id: str):
         }
 
         # Save simulation results with retries
+        print(f"[STEP 11] Starting save process with retries")
         max_retries = 3
         retry_count = 0
+        save_error = None
         while retry_count < max_retries:
             try:
+                print(f"💾 [STEP 11.{retry_count + 1}] Attempting to save simulation results (attempt {retry_count + 1}/{max_retries})")
                 # Update the case document
                 save_ok = update_case(case_id, simulation_document)
                 if not save_ok:
-                    print(f"❌ Failed to persist simulation results to DB (attempt {retry_count + 1}/{max_retries})")
+                    save_error = "update_case returned False"
+                    print(f"❌ [ERROR] Failed to persist simulation results to DB: {save_error}")
                     retry_count += 1
                     continue
 
                 # Verify the save by reading back
+                print(f"[STEP 11.{retry_count + 1}.1] Verifying save by reading back case")
                 updated_case = get_case_by_id(case_id)
                 if not updated_case:
-                    print(f"❌ Case not found after save (attempt {retry_count + 1}/{max_retries})")
+                    save_error = "Case not found after save"
+                    print(f"❌ [ERROR] {save_error}")
                     retry_count += 1
                     continue
 
                 # Check if simulation results exist and match
                 saved_results = updated_case.get("simulation_results")
                 if not saved_results:
-                    print(f"❌ Simulation results not found after save (attempt {retry_count + 1}/{max_retries})")
+                    save_error = "Simulation results not found after save"
+                    print(f"❌ [ERROR] {save_error}")
                     retry_count += 1
                     continue
 
@@ -733,24 +818,29 @@ def start_courtroom_simulation(case_id: str):
                 required_fields = ["simulation_id", "simulation_text", "turns", "status"]
                 missing_fields = [field for field in required_fields if field not in saved_results]
                 if missing_fields:
-                    print(f"❌ Missing required fields in saved results: {missing_fields} (attempt {retry_count + 1}/{max_retries})")
+                    save_error = f"Missing required fields: {missing_fields}"
+                    print(f"❌ [ERROR] {save_error}")
                     retry_count += 1
                     continue
 
-                print(f"✅ Simulation results verified in database after {retry_count + 1} attempts")
+                print(f"✅ [SUCCESS] Simulation results verified in database after {retry_count + 1} attempts")
                 break
 
             except Exception as e:
-                print(f"❌ Error saving simulation (attempt {retry_count + 1}/{max_retries}): {e}")
+                save_error = str(e)
+                print(f"❌ [ERROR] Exception saving simulation (attempt {retry_count + 1}/{max_retries}): {save_error}")
                 retry_count += 1
 
         if retry_count >= max_retries:
-            socketio.emit('error', {'message': 'Failed to save simulation results after multiple attempts'}, room=case_id)
-            return jsonify({"error": "Failed to save simulation results after multiple attempts"}), 500
+            error_msg = f"Failed to save simulation results after {max_retries} attempts. Last error: {save_error}"
+            socketio.emit('error', {'message': error_msg}, room=case_id)
+            print(f"🚨 [FATAL] {error_msg}")
+            return jsonify({"error": error_msg}), 500
 
-        print("✅ Simulation finished and saved:", simulation_id)
+        print(f"✅ [SUCCESS] Simulation finished and saved: {simulation_id}")
 
         # Emit complete event
+        print(f"[STEP 12] Emitting complete event via socket")
         socketio.emit('complete', {
             'message': 'Simulation completed successfully',
             'simulation_id': simulation_id,
@@ -759,6 +849,7 @@ def start_courtroom_simulation(case_id: str):
             'generated_at': simulation_document["simulation_results"]["generated_at"].isoformat()
         }, room=case_id)
 
+        print(f"[FINAL] Simulation completed successfully for case {case_id}")
         return (
             jsonify(
                 {
@@ -777,7 +868,7 @@ def start_courtroom_simulation(case_id: str):
         )
 
     except Exception as e:
-        print(f"❌ Simulation failed overall: {e}")
+        print(f"❌ [FATAL] Simulation failed overall: {e}")
         return jsonify({"error": f"Simulation failed: {str(e)}"}), 500
 
 
@@ -804,7 +895,7 @@ def get_simulation_report(case_id: str):
                 from services.ai_services.report_generator import generate_simulation_report
                 simulation_id = simulation_results.get('simulation_id', f"SIM_{case_id}")
                 pdf_filename = f"simulation_{simulation_id}.pdf"
-                pdf_path = os.path.join(os.path.dirname(__file__), "..", "reports", pdf_filename)
+                pdf_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "reports", pdf_filename))
                 os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
                 actual_path = generate_simulation_report(case, simulation_results, pdf_path)
 
@@ -814,7 +905,8 @@ def get_simulation_report(case_id: str):
                 report_path = actual_path
             except Exception as e:
                 print(f"❌ Failed to generate report on demand: {e}")
-                return jsonify({"error": "Failed to generate report"}), 500
+                # Return error instead of 500, let frontend handle
+                return jsonify({"error": f"Failed to generate report: {str(e)}"}), 500
 
         # Determine mimetype and filename based on file extension
         if report_path.endswith('.pdf'):

@@ -5,7 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageSquare, Play, RotateCcw, Download, Globe, Lock, Sparkles, User } from "lucide-react";
+import { Heart, MessageSquare, Play, RotateCcw, Download, Globe, Lock, Sparkles, User, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
@@ -54,6 +54,9 @@ export function CaseCard({ caseData, showPublicToggle = false }) {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+  const [isStartLoading, setIsStartLoading] = useState(false);
+  const [isReplayLoading, setIsReplayLoading] = useState(false);
+  const [isDownloadLoading, setIsDownloadLoading] = useState(false);
 
   const hasSimulation = !!simulation_results;
   const displayUserName = user?.name || "Anonymous";
@@ -74,6 +77,42 @@ export function CaseCard({ caseData, showPublicToggle = false }) {
       toast.error("Could not update like.");
     } finally {
       setIsLikeLoading(false);
+    }
+  };
+
+  const handleStart = async () => {
+    if (!onStart) return;
+    setIsStartLoading(true);
+    try {
+      await onStart();
+    } catch (error) {
+      toast.error("Failed to start simulation");
+    } finally {
+      setIsStartLoading(false);
+    }
+  };
+
+  const handleReplay = async () => {
+    if (!onReplay) return;
+    setIsReplayLoading(true);
+    try {
+      await onReplay();
+    } catch (error) {
+      toast.error("Failed to replay simulation");
+    } finally {
+      setIsReplayLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    if (!onDownload) return;
+    setIsDownloadLoading(true);
+    try {
+      await onDownload();
+    } catch (error) {
+      toast.error("Failed to download report");
+    } finally {
+      setIsDownloadLoading(false);
     }
   };
 
@@ -179,14 +218,55 @@ export function CaseCard({ caseData, showPublicToggle = false }) {
           </div>
 
           <div className="w-full grid grid-cols-3 gap-2 pt-4 border-t border-gradient-to-r from-transparent via-border/50 to-transparent">
-            <Button size="sm" onClick={onStart} className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-md hover:shadow-lg transition-all duration-300">
-              <Play className="h-4 w-4 mr-1.5" /> Start
+            <Button 
+              size="sm" 
+              onClick={handleStart} 
+              disabled={isStartLoading}
+              className="w-full bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50"
+            >
+              {isStartLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Starting...
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 mr-1.5" /> Start
+                </>
+              )}
             </Button>
-            <Button size="sm" variant="secondary" onClick={onReplay} disabled={!hasSimulation} className="w-full bg-gradient-to-r from-secondary to-secondary/90 hover:from-secondary/90 hover:to-secondary/80 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50">
-              <RotateCcw className="h-4 w-4 mr-1.5" /> Replay
+            <Button 
+              size="sm" 
+              variant="secondary" 
+              onClick={handleReplay} 
+              disabled={!hasSimulation || isReplayLoading}
+              className="w-full bg-gradient-to-r from-secondary to-secondary/90 hover:from-secondary/90 hover:to-secondary/80 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50"
+            >
+              {isReplayLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Loading...
+                </>
+              ) : (
+                <>
+                  <RotateCcw className="h-4 w-4 mr-1.5" /> Replay
+                </>
+              )}
             </Button>
-            <Button size="sm" variant="outline" onClick={onDownload} disabled={!hasSimulation} className="w-full border-2 hover:border-primary/50 hover:bg-primary/5 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50">
-              <Download className="h-4 w-4 mr-1.5" /> Report
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={handleDownload} 
+              disabled={!hasSimulation || isDownloadLoading}
+              className="w-full border-2 hover:border-primary/50 hover:bg-primary/5 shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50"
+            >
+              {isDownloadLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> Downloading...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-1.5" /> Report
+                </>
+              )}
             </Button>
           </div>
         </CardFooter>

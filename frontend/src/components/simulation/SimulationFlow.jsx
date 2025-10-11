@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import CaseForm from "@/components/Case/CaseForm";
 import ProcessingScreen from "@/components/simulation/ProcessingScreen";
+import LiveSimulation from "@/components/simulation/LiveSimulation";
 import { socket, simulationAPI } from "@/services/api";
 
 /**
@@ -76,18 +77,7 @@ export default function SimulationFlow() {
       return <CaseForm onCreated={handleCreateCase} />;
 
     case "processing":
-      return (
-        <ProcessingScreen
-          progress={processingProgress}
-          estimatedTime="3-5 minutes"
-          steps={[
-            { label: "Uploading Evidence", active: processingProgress < 25, completed: processingProgress >= 25 },
-            { label: "Parsing Documents", active: processingProgress >= 25 && processingProgress < 50, completed: processingProgress >= 50 },
-            { label: "Analyzing Case", active: processingProgress >= 50 && processingProgress < 75, completed: processingProgress >= 75 },
-            { label: "Finalizing", active: processingProgress >= 75, completed: processingProgress >= 100 },
-          ]}
-        />
-      );
+      return <LiveSimulation />;
 
     case "simulation":
       navigate(`/simulation/${caseId}`);

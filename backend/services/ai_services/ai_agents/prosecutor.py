@@ -239,6 +239,30 @@ class ProsecutorAgent(BaseAgent):
         ]
         return random.choice(responses)
     
+    def make_rebuttal_argument(self, case_summary: str) -> str:
+        """Deliver rebuttal argument addressing defense points"""
+        self.think("Preparing rebuttal argument to counter defense claims", "rebuttal")
+
+        prompt = f"""
+        Deliver a rebuttal argument as a prosecutor addressing the defense's closing argument:
+
+        Case Summary: {case_summary}
+
+        Prosecution Theory: {self.prosecution_strategy.get('main_theory', 'Defendant is guilty as charged')}
+
+        Your rebuttal should:
+        1. Address specific defense arguments and weaknesses
+        2. Re-emphasize strong evidence that counters defense claims
+        3. Reinforce the prosecution's case theory
+        4. Remind the jury of the burden of proof
+        5. End with a final call for conviction
+
+        Be confident and address any reasonable doubt. Use phrases like "The defense wants you to believe..." but "the evidence shows..."
+        Keep it focused and impactful.
+        """
+
+        return self.respond(prompt, "prosecution rebuttal argument")
+
     def _get_closing_response(self) -> str:
         """Enhanced closing argument fallback"""
         closings = [

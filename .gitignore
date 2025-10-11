@@ -47,6 +47,8 @@ backend/.env.local
 backend/.flaskenv
 .vscode/
 .qodo/
+.cache\
+.cache/
 # Data & runtime folders
 backend/uploads/
 backend/uploaded_evidence/

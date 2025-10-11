@@ -8,6 +8,7 @@ const FormattedTranscript = ({ transcript }) => {
     const lines = text.split('\n');
     const sections = [];
     let currentSection = { type: 'text', content: [] };
+    let currentThinking = null;
 
     lines.forEach((line) => {
       const trimmedLine = line.trim();
@@ -18,6 +19,25 @@ const FormattedTranscript = ({ transcript }) => {
           sections.push(currentSection);
           currentSection = { type: 'text', content: [] };
         }
+        return;
+      }
+
+      // Detect thinking process markers (■, ■■, ■■■, etc.)
+      const thinkingMatch = trimmedLine.match(/^(■+)\s*(.+)$/);
+      if (thinkingMatch) {
+        if (currentSection.content.length > 0) {
+          sections.push(currentSection);
+          currentSection = { type: 'text', content: [] };
+        }
+        
+        const level = thinkingMatch[1].length;
+        const content = thinkingMatch[2];
+        
+        sections.push({
+          type: 'thinking',
+          level: level,
+          content: content
+        });
         return;
       }
 
@@ -56,7 +76,23 @@ const FormattedTranscript = ({ transcript }) => {
         return;
       }
 
+      // Detect bullet points
+      if (trimmedLine.match(/^[-*•]\s+/)) {
+        if (currentSection.type !== 'bullet-list') {
+          if (currentSection.content.length > 0) {
+            sections.push(currentSection);
+          }
+          currentSection = { type: 'bullet-list', content: [] };
+        }
+        currentSection.content.push(trimmedLine.replace(/^[-*•]\s+/, ''));
+        return;
+      }
+
       // Regular text
+      if (currentSection.type === 'bullet-list') {
+        sections.push(currentSection);
+        currentSection = { type: 'text', content: [] };
+      }
       currentSection.content.push(trimmedLine);
     });
 
@@ -150,6 +186,47 @@ const FormattedTranscript = ({ transcript }) => {
                     {section.content}
                   </p>
                 </div>
+              </div>
+            );
+          }
+
+          if (section.type === 'thinking') {
+            const levelColors = {
+              1: 'bg-blue-50 dark:bg-blue-950/20 border-blue-300 dark:border-blue-700 text-blue-800 dark:text-blue-200',
+              2: 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-300 dark:border-indigo-700 text-indigo-800 dark:text-indigo-200',
+              3: 'bg-purple-50 dark:bg-purple-950/20 border-purple-300 dark:border-purple-700 text-purple-800 dark:text-purple-200',
+              4: 'bg-violet-50 dark:bg-violet-950/20 border-violet-300 dark:border-violet-700 text-violet-800 dark:text-violet-200'
+            };
+            const colorClass = levelColors[section.level] || levelColors[1];
+            const indent = (section.level - 1) * 16;
+
+            return (
+              <div key={index} style={{ marginLeft: `${indent}px` }} className="py-2">
+                <div className={`p-3 rounded-lg border-l-4 ${colorClass}`}>
+                  <div className="flex items-start gap-2">
+                    <svg className="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <p className="text-sm leading-relaxed font-medium flex-1">
+                      {section.content}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          if (section.type === 'bullet-list') {
+            return (
+              <div key={index} className="py-2 px-4">
+                <ul className="space-y-2">
+                  {section.content.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="text-primary mt-1">•</span>
+                      <span className="flex-1">{item}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             );
           }

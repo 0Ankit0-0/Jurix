@@ -27,6 +27,7 @@ const LiveSimulation = () => {
   const [isSimulating, setIsSimulating] = useState(true); // Check if still running
   const [isTyping, setIsTyping] = useState(false);
   const [typingRole, setTypingRole] = useState("Judge");
+  const [thinkingText, setThinkingText] = useState("");
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [turns, setTurns] = useState([]);
@@ -64,6 +65,7 @@ const LiveSimulation = () => {
     socket.on('thinking', (data) => {
       setIsTyping(true);
       setTypingRole(data.role);
+      setThinkingText(data.message || "Thinking...");
     });
 
     socket.on('complete', async (data) => {
@@ -297,15 +299,7 @@ const LiveSimulation = () => {
                   </div>
                 )}
                 <CardContent>
-                  {turn.thinking_process && (
-                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
-                      <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">Thinking Process:</p>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-                        {turn.thinking_process}
-                      </p>
-                    </div>
-                  )}
-                  <p className="text-foreground leading-relaxed">{turn.message}</p>
+                  {/* Chat answers are displayed above */}
                 </CardContent>
 
                 {/* Question Input */}
@@ -338,17 +332,26 @@ const LiveSimulation = () => {
 
         {/* Turns Display */}
         <div className="space-y-4">
-          {isTyping && currentTurn < turns.length - 1 && (
-            <TypingIndicator role={typingRole} />
+          {/* Show typing indicator when simulation is running or during replay */}
+          {(isSimulating || (isTyping && currentTurn < turns.length - 1)) && (
+            <TypingIndicator role={typingRole} thinkingText={thinkingText} />
           )}
-          {turns.slice(0, currentTurn + 1).map((turn, index) => (
+          
+          {/* Display turns that have been received */}
+          {turns.slice(0, isSimulating ? turns.length : currentTurn + 1).map((turn, index) => (
             <motion.div
-              key={turn.turn_number}
+              key={`${turn.turn_number}-${index}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ duration: 0.5 }}
             >
-              <Card className={`border-2 ${index === currentTurn ? 'border-primary shadow-lg' : 'border-border'}`}>
+              <Card className={`border-2 ${
+                isSimulating && index === turns.length - 1 
+                  ? 'border-primary shadow-lg ring-2 ring-primary/20' 
+                  : !isSimulating && index === currentTurn 
+                  ? 'border-primary shadow-lg' 
+                  : 'border-border'
+              }`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg flex items-center gap-2">
@@ -356,31 +359,63 @@ const LiveSimulation = () => {
                         {turn.role}
                       </Badge>
                       <span className="text-sm text-muted-foreground">Turn {turn.turn_number + 1}</span>
+                      {isSimulating && index === turns.length - 1 && (
+                        <Badge variant="outline" className="ml-2 animate-pulse">
+                          Live
+                        </Badge>
+                      )}
                     </CardTitle>
                     <span className="text-sm text-muted-foreground">{turn.timestamp}</span>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
+                  {/* Thinking Process Section - Enhanced */}
                   {turn.thinking_process && (
-                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
-                      <p className="text-sm text-blue-800 dark:text-blue-200 font-medium mb-2">Thinking Process:</p>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-                        {turn.thinking_process}
-                      </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-300 to-transparent dark:via-blue-700"></div>
+                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                          </svg>
+                          Thinking Process
+                        </span>
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-300 to-transparent dark:via-blue-700"></div>
+                      </div>
+                      <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-l-4 border-blue-500 rounded-r-lg shadow-sm">
+                        <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed italic">
+                          "{turn.thinking_process}"
+                        </p>
+                      </div>
                     </div>
                   )}
-                  <p className="text-foreground leading-relaxed">{turn.message}</p>
+                  
+                  {/* Statement Section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-700"></div>
+                      <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                        Statement
+                      </span>
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-700"></div>
+                    </div>
+                    <div className="p-4 bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
+                      <p className="text-foreground leading-relaxed">{turn.message}</p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
           ))}
         </div>
 
-        {/* Full Transcript */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-4">Full Transcript</h2>
-          <FormattedTranscript transcript={simulation_text} />
-        </div>
+        {/* Full Transcript - Only show when simulation is complete */}
+        {!isSimulating && simulation_text && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold mb-4">Full Transcript</h2>
+            <FormattedTranscript transcript={simulation_text} />
+          </div>
+        )}
       </div>
     </div>
   );
