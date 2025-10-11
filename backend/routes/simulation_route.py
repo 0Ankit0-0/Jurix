@@ -5,7 +5,7 @@ import json
 import time
 import logging
 from datetime import datetime
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Tuple
 
 # Project imports - adjust paths if needed
 from model.case_model import get_case_by_id, update_case
@@ -241,6 +241,202 @@ def generate_static_fallback(case_id: str, case_data: Dict[str, Any], evidence_a
     ]
 
     return {"transcript": "\n".join(transcript_lines), "meta": {"provider": "static_fallback"}}
+
+
+def _validate_case_and_setup(case_id: str) -> Dict[str, Any]:
+    """Validate case and return case data, or raise error"""
+    case = get_case_by_id(case_id)
+    if not case:
+        raise ValueError("Case not found")
+
+    allowed_states = ["ready_for_simulation", "draft", "evidence_uploaded"]
+    if case.get("status") not in allowed_states:
+        raise ValueError(f'Case must be in one of these states: {", ".join(allowed_states)}')
+
+    # Initialize progress tracking
+    update_case(case_id, {
+        "simulation_results": {
+            "status": "processing",
+            "progress": 0,
+            "step": 0
+        }
+    })
+
+    return case
+
+
+def _analyze_evidence_for_case(case_id: str, case: Dict[str, Any]) -> Union[List[Dict[str, Any]], str]:
+    """Analyze evidence for the case, return list or error string"""
+    update_case(case_id, {
+        "simulation_results.status": "processing",
+        "simulation_results.progress": 10,
+        "simulation_results.step": 0
+    })
+
+    if case.get('has_evidence', False):
+        evidence_analysis = analyze_case_evidence(case_id)
+        if isinstance(evidence_analysis, str):
+            if "No evidence files found" in evidence_analysis:
+                return []
+            else:
+                raise ValueError(evidence_analysis)
+        return evidence_analysis
+    else:
+        return []
+
+
+def _generate_simulation_for_case(case_id: str, case: Dict[str, Any], evidence_analysis: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Generate simulation using agents, with fallbacks"""
+    update_case(case_id, {
+        "simulation_results.status": "processing",
+        "simulation_results.progress": 40,
+        "simulation_results.step": 1 if evidence_analysis else 0
+    })
+
+    try:
+        sim_out = run_agent_simulation(case_id, case, evidence_analysis)
+        simulation_type = sim_out.get("meta", {}).get("provider", "local_agents")
+    except Exception as e:
+        try:
+            openai_out = generate_openai_simulation(case_id, case, evidence_analysis)
+            sim_out = {"transcript": openai_out["transcript"], "thinking_processes": {}, "meta": openai_out.get("meta", {})}
+            simulation_type = "openai"
+        except Exception as e_openai:
+            sim_out = generate_static_fallback(case_id, case, evidence_analysis)
+            sim_out.setdefault("thinking_processes", {})
+            simulation_type = "static_fallback"
+
+    return sim_out, simulation_type
+
+
+def _create_reports_for_simulation(case: Dict[str, Any], simulation_results: Dict[str, Any]) -> Tuple[Dict[str, Any], str]:
+    """Create detailed and PDF reports, return detailed_report and pdf_path"""
+    detailed_report = None
+    pdf_path = None
+
+    try:
+        from services.document_Service.report_generator import EnhancedReportGenerator
+        generator = EnhancedReportGenerator()
+        detailed_report = generator.generate_comprehensive_report(case, simulation_results)
+    except Exception as e:
+        detailed_report = None
+
+    try:
+        from services.ai_services.report_generator import generate_simulation_report
+        simulation_id = simulation_results.get('simulation_id', f"SIM_{case['_id']}")
+        pdf_filename = f"simulation_{simulation_id}.pdf"
+        pdf_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "reports", pdf_filename))
+        os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
+        actual_path = generate_simulation_report(case, simulation_results, pdf_path)
+        pdf_path = actual_path
+    except ImportError:
+        pdf_path = None
+    except Exception as e:
+        pdf_path = None
+
+    return detailed_report, pdf_path
+
+
+def validate_simulation_results(results):
+    """Validate simulation results before saving
+
+    Args:
+        results (dict): The simulation results to validate
+
+    Returns:
+        tuple: (is_valid, error_message)
+    """
+    required_fields = {
+        'simulation_id': str,
+        'simulation_text': str,
+        'turns': list,
+        'thinking_processes': dict,
+        'evidence_analyzed': int,
+        'simulation_type': str,
+        'generated_at': datetime,
+        'status': str
+    }
+
+    # Check required fields exist and have correct type
+    for field, expected_type in required_fields.items():
+        if field not in results:
+            return False, f"Missing required field: {field}"
+        if not isinstance(results[field], expected_type):
+            return False, f"Invalid type for {field}: expected {expected_type}, got {type(results[field])}"
+
+    # Validate turns format
+    for turn in results['turns']:
+        required_turn_fields = {'turn_number', 'role', 'message', 'timestamp'}
+        missing_fields = required_turn_fields - set(turn.keys())
+        if missing_fields:
+            return False, f"Turn missing required fields: {missing_fields}"
+        # Duration is optional, default added elsewhere
+
+    # Additional validation rules
+    if not results['simulation_text'].strip():
+        return False, "Simulation text cannot be empty"
+
+    if not 0 <= results['evidence_analyzed'] <= 100:  # Reasonable limit
+        return False, "Invalid evidence count"
+
+    valid_types = {'local_agents', 'openai', 'static_fallback', 'hybrid'}
+    if results['simulation_type'] not in valid_types:
+        return False, f"Invalid simulation type: {results['simulation_type']}"
+
+    if results['status'] not in {'completed', 'failed', 'partial'}:
+        return False, f"Invalid status: {results['status']}"
+
+    return True, None
+
+
+def _save_simulation_results(case_id: str, case: Dict[str, Any], simulation_results: Dict[str, Any], detailed_report: Dict[str, Any], pdf_path: str, simulation_type: str, evidence_analysis: List[Dict[str, Any]]) -> None:
+    """Save simulation results with retries"""
+    max_retries = 3
+    retry_count = 0
+    save_error = None
+
+    while retry_count < max_retries:
+        try:
+            save_ok = update_case(case_id, {
+                "simulation_results": simulation_results,
+                "status": "completed",
+                "report_path": pdf_path,
+                "detailed_report": detailed_report,
+                "last_updated": datetime.utcnow()
+            })
+            if not save_ok:
+                save_error = "update_case returned False"
+                retry_count += 1
+                continue
+
+            updated_case = get_case_by_id(case_id)
+            if not updated_case:
+                save_error = "Case not found after save"
+                retry_count += 1
+                continue
+
+            saved_results = updated_case.get("simulation_results")
+            if not saved_results:
+                save_error = "Simulation results not found after save"
+                retry_count += 1
+                continue
+
+            required_fields = ["simulation_id", "simulation_text", "turns", "status"]
+            missing_fields = [field for field in required_fields if field not in saved_results]
+            if missing_fields:
+                save_error = f"Missing required fields: {missing_fields}"
+                retry_count += 1
+                continue
+
+            break
+        except Exception as e:
+            save_error = str(e)
+            retry_count += 1
+
+    if retry_count >= max_retries:
+        error_msg = f"Failed to save simulation results after {max_retries} attempts. Last error: {save_error}"
+        socketio.emit('error', {'message': error_msg}, room=case_id)
+        raise RuntimeError(error_msg)
 
 
 def run_agent_simulation(case_id: str, case_data: Dict[str, Any], evidence_analysis: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -542,333 +738,77 @@ def start_courtroom_simulation(case_id: str):
         return "", 200
 
     try:
-        print(f"[START] 🚀 Request to start simulation for case: {case_id}")
-        case = get_case_by_id(case_id)
-        if not case:
-            print(f"[ERROR] Case {case_id} not found")
-            return jsonify({"error": "Case not found"}), 404
+        case = _validate_case_and_setup(case_id)
+        evidence_analysis = _analyze_evidence_for_case(case_id, case)
+        sim_out, simulation_type = _generate_simulation_for_case(case_id, case, evidence_analysis)
 
-        # Allow simulation start from more states
-        allowed_states = ["ready_for_simulation", "draft", "evidence_uploaded"]
-        if case.get("status") not in allowed_states:
-            print(f"[ERROR] Case status '{case.get('status')}' not allowed. Allowed: {allowed_states}")
-            return (
-                jsonify(
-                    {
-                        "error": f'Case must be in one of these states: {", ".join(allowed_states)}',
-                        "current_status": case.get("status"),
-                        "allowed_states": allowed_states
-                    }
-                ),
-                400,
-            )
-
-        print(f"[STEP 1] Initializing progress tracking for case {case_id}")
-        # Initialize progress tracking
-        update_case(case_id, {
-            "simulation_results": {
-                "status": "processing",
-                "progress": 0,
-                "step": 0
-            }
-        })
-
-        # Step 1: analyze evidence (if any)
-        print("🔍 [STEP 2] Analyzing evidence files...")
-        update_case(case_id, {
-            "simulation_results.status": "processing",
-            "simulation_results.progress": 10,
-            "simulation_results.step": 0
-        })
-        evidence_analysis = []
-        try:
-            if case.get('has_evidence', False):  # Check if case was created with evidence flag
-                print(f"[STEP 2.1] Case has evidence flag, analyzing evidence for {case_id}")
-                evidence_analysis = analyze_case_evidence(case_id)
-                if isinstance(evidence_analysis, str):
-                    if "No evidence files found" in evidence_analysis:
-                        print("ℹ️ [INFO] No evidence files to analyze")
-                        evidence_analysis = []  # Set to empty list for no evidence
-                    else:
-                        print(f"[ERROR] Evidence analysis error: {evidence_analysis}")
-                        return jsonify({"error": evidence_analysis}), 400
-                else:
-                    print(f"📊 [SUCCESS] Found {len(evidence_analysis)} evidence files to analyze")
-            else:
-                print("ℹ️ [INFO] Case marked as no evidence required")
-                evidence_analysis = []  # Ensure it's an empty list
-        except Exception as e:
-            print(f"❌ [ERROR] Evidence analysis failed: {e}")
-            return jsonify({"error": f"Failed to analyze evidence: {str(e)}"}), 500
-
-        # Step 2: Try local agent simulation first
-        print("🤖 [STEP 3] Running AI agent simulation...")
-        update_case(case_id, {
-            "simulation_results.status": "processing",
-            "simulation_results.progress": 40,
-            "simulation_results.step": 1 if evidence_analysis else 0
-        })
-        try:
-            print(f"[STEP 3.1] Attempting local agent simulation for {case_id}")
-            sim_out = run_agent_simulation(case_id, case, evidence_analysis)
-            simulation_type = sim_out.get("meta", {}).get("provider", "local_agents")
-            print(f"✅ [SUCCESS] Agent simulation completed using {simulation_type}")
-        except Exception as e_agent:
-            print(f"⚠️ [WARNING] Agent simulation failed, falling back to OpenAI: {e_agent}")
-            # Step 3: Try OpenAI GPT fallback
-            print("🔄 [STEP 4] Attempting OpenAI simulation...")
-            try:
-                print(f"[STEP 4.1] Generating OpenAI simulation for {case_id}")
-                openai_out = generate_openai_simulation(case_id, case, evidence_analysis)
-                sim_out = {"transcript": openai_out["transcript"], "thinking_processes": {}, "meta": openai_out.get("meta", {})}
-                simulation_type = "openai"
-                print(f"✅ [SUCCESS] OpenAI simulation completed")
-            except Exception as e_openai:
-                print(f"⚠️ [WARNING] OpenAI fallback failed, using static fallback: {e_openai}")
-                print("📝 [STEP 5] Generating static simulation...")
-                sim_out = generate_static_fallback(case_id, case, evidence_analysis)
-                sim_out.setdefault("thinking_processes", {})
-                simulation_type = "static_fallback"
-                print("✅ [SUCCESS] Static simulation generated")
-
-        # Update progress before final processing
-        print(f"[STEP 6] Updating progress before final processing for {case_id}")
-        update_case(case_id, {
-            "simulation_results.status": "processing",
-            "simulation_results.progress": 70,
-            "simulation_results.step": 2 if evidence_analysis else 1
-        })
-
-        # Step 4: Save simulation results into the case
-        print(f"[STEP 7] Preparing simulation results for saving")
+        # Prepare simulation results
         simulation_id = f"SIM_{case_id}_{int(datetime.utcnow().timestamp())}"
         transcript = sim_out.get("transcript")
-        print(f"[STEP 7.1] Simulation ID: {simulation_id}, transcript length: {len(transcript) if transcript else 0}")
 
-        # Get turns - either from live simulation or parse transcript
         if 'turns' in sim_out:
             turns = sim_out['turns']
-            print(f"[STEP 7.2] Using live turns: {len(turns)} turns")
         else:
             turns = parse_simulation_into_turns(transcript)
-            print(f"[STEP 7.3] Parsed turns from transcript: {len(turns)} turns")
 
-        # Update progress
-        print(f"[STEP 8] Updating progress to 85%")
         update_case(case_id, {
             "simulation_results.status": "processing",
             "simulation_results.progress": 85,
             "simulation_results.step": 3 if evidence_analysis else 2
         })
-        
-        # Generate PDF report
-        from services.ai_services.report_generator import generate_simulation_report
-        
-        def validate_simulation_results(results):
-            """Validate simulation results before saving
-            
-            Args:
-                results (dict): The simulation results to validate
-                
-            Returns:
-                tuple: (is_valid, error_message)
-            """
-            required_fields = {
-                'simulation_id': str,
-                'simulation_text': str,
-                'turns': list,
-                'thinking_processes': dict,
-                'evidence_analyzed': int,
-                'simulation_type': str,
-                'generated_at': datetime,
-                'status': str
-            }
-            
-            # Check required fields exist and have correct type
-            for field, expected_type in required_fields.items():
-                if field not in results:
-                    return False, f"Missing required field: {field}"
-                if not isinstance(results[field], expected_type):
-                    return False, f"Invalid type for {field}: expected {expected_type}, got {type(results[field])}"
-            
-            # Validate turns format
-            for turn in results['turns']:
-                required_turn_fields = {'turn_number', 'role', 'message', 'timestamp'}
-                missing_fields = required_turn_fields - set(turn.keys())
-                if missing_fields:
-                    return False, f"Turn missing required fields: {missing_fields}"
-                # Duration is optional, default added elsewhere
-            
-            # Additional validation rules
-            if not results['simulation_text'].strip():
-                return False, "Simulation text cannot be empty"
-                
-            if not 0 <= results['evidence_analyzed'] <= 100:  # Reasonable limit
-                return False, "Invalid evidence count"
-                
-            valid_types = {'local_agents', 'openai', 'static_fallback', 'hybrid'}
-            if results['simulation_type'] not in valid_types:
-                return False, f"Invalid simulation type: {results['simulation_type']}"
-                
-            if results['status'] not in {'completed', 'failed', 'partial'}:
-                return False, f"Invalid status: {results['status']}"
-            
-            return True, None
-            
-        # Prepare simulation results with thinking processes
+
         simulation_results = {
             "simulation_id": simulation_id,
             "simulation_text": transcript,
-            "turns": [],  # Will be populated below
+            "turns": [],
             "thinking_processes": sim_out.get("thinking_processes", {}),
             "evidence_analyzed": len(evidence_analysis) if evidence_analysis else 0,
             "simulation_type": simulation_type,
             "generated_at": datetime.utcnow(),
             "status": "completed"
         }
-        
-        # Validate results before proceeding
+
+        # Validate results
         is_valid, error_message = validate_simulation_results(simulation_results)
         if not is_valid:
-            print(f"❌ Invalid simulation results: {error_message}")
             return jsonify({"error": f"Invalid simulation results: {error_message}"}), 400
-        
-        # Process turns with thinking processes
+
         for turn in turns:
             turn_with_thinking = {
                 **turn,
                 "thinking_process": sim_out.get("thinking_processes", {}).get(turn["role"], ""),
-                "duration": turn.get("duration", 3000)  # Default 3 seconds if missing
+                "duration": turn.get("duration", 3000)
             }
             simulation_results["turns"].append(turn_with_thinking)
-        
-        # Try to generate detailed report using EnhancedReportGenerator
-        print(f"[STEP 9] Attempting to generate detailed report")
-        detailed_report = None
-        try:
-            from services.document_Service.report_generator import EnhancedReportGenerator
-            generator = EnhancedReportGenerator()
-            detailed_report = generator.generate_comprehensive_report(case, simulation_results)
-            print("✅ [SUCCESS] Detailed report generated successfully")
-        except Exception as e:
-            print(f"⚠️ [WARNING] Detailed report generation failed: {e}")
-            detailed_report = None
 
-        # Try to generate PDF report if reportlab is available
-        print(f"[STEP 10] Attempting to generate PDF report")
-        pdf_path = None
-        try:
-            from services.ai_services.report_generator import generate_simulation_report
-            pdf_filename = f"simulation_{simulation_id}.pdf"
-            pdf_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "reports", pdf_filename))
-            os.makedirs(os.path.dirname(pdf_path), exist_ok=True)
-            actual_path = generate_simulation_report(case, simulation_results, pdf_path)
-            pdf_path = actual_path  # Use returned path
-            print("✅ [SUCCESS] PDF report generated successfully")
-        except ImportError as e:
-            print(f"⚠️ [WARNING] PDF generation skipped: {e}")
-            pdf_path = None
-        except Exception as e:
-            print(f"⚠️ [WARNING] PDF generation failed: {e}")
-            pdf_path = None
-        
-        # Prepare simulation document
-        simulation_document = {
-            "simulation_results": simulation_results,
-            "status": "completed",
-            "report_path": pdf_path,
-            "detailed_report": detailed_report,
-            "last_updated": datetime.utcnow()  # Add timestamp for tracking
-        }
+        detailed_report, pdf_path = _create_reports_for_simulation(case, simulation_results)
+        _save_simulation_results(case_id, case, simulation_results, detailed_report, pdf_path, simulation_type, evidence_analysis)
 
-        # Save simulation results with retries
-        print(f"[STEP 11] Starting save process with retries")
-        max_retries = 3
-        retry_count = 0
-        save_error = None
-        while retry_count < max_retries:
-            try:
-                print(f"💾 [STEP 11.{retry_count + 1}] Attempting to save simulation results (attempt {retry_count + 1}/{max_retries})")
-                # Update the case document
-                save_ok = update_case(case_id, simulation_document)
-                if not save_ok:
-                    save_error = "update_case returned False"
-                    print(f"❌ [ERROR] Failed to persist simulation results to DB: {save_error}")
-                    retry_count += 1
-                    continue
-
-                # Verify the save by reading back
-                print(f"[STEP 11.{retry_count + 1}.1] Verifying save by reading back case")
-                updated_case = get_case_by_id(case_id)
-                if not updated_case:
-                    save_error = "Case not found after save"
-                    print(f"❌ [ERROR] {save_error}")
-                    retry_count += 1
-                    continue
-
-                # Check if simulation results exist and match
-                saved_results = updated_case.get("simulation_results")
-                if not saved_results:
-                    save_error = "Simulation results not found after save"
-                    print(f"❌ [ERROR] {save_error}")
-                    retry_count += 1
-                    continue
-
-                # Verify key fields are present
-                required_fields = ["simulation_id", "simulation_text", "turns", "status"]
-                missing_fields = [field for field in required_fields if field not in saved_results]
-                if missing_fields:
-                    save_error = f"Missing required fields: {missing_fields}"
-                    print(f"❌ [ERROR] {save_error}")
-                    retry_count += 1
-                    continue
-
-                print(f"✅ [SUCCESS] Simulation results verified in database after {retry_count + 1} attempts")
-                break
-
-            except Exception as e:
-                save_error = str(e)
-                print(f"❌ [ERROR] Exception saving simulation (attempt {retry_count + 1}/{max_retries}): {save_error}")
-                retry_count += 1
-
-        if retry_count >= max_retries:
-            error_msg = f"Failed to save simulation results after {max_retries} attempts. Last error: {save_error}"
-            socketio.emit('error', {'message': error_msg}, room=case_id)
-            print(f"🚨 [FATAL] {error_msg}")
-            return jsonify({"error": error_msg}), 500
-
-        print(f"✅ [SUCCESS] Simulation finished and saved: {simulation_id}")
-
-        # Emit complete event
-        print(f"[STEP 12] Emitting complete event via socket")
         socketio.emit('complete', {
             'message': 'Simulation completed successfully',
             'simulation_id': simulation_id,
             'evidence_count': len(evidence_analysis),
             'type': simulation_type,
-            'generated_at': simulation_document["simulation_results"]["generated_at"].isoformat()
+            'generated_at': simulation_results["generated_at"].isoformat()
         }, room=case_id)
 
-        print(f"[FINAL] Simulation completed successfully for case {case_id}")
-        return (
-            jsonify(
-                {
-                    "message": "Courtroom simulation completed successfully",
-                    "case_id": case_id,
-                    "simulation": {
-                        "id": simulation_id,
-                        "text": sim_out.get("transcript"),
-                        "evidence_count": len(evidence_analysis),
-                        "generated_at": simulation_document["simulation_results"]["generated_at"].isoformat(),
-                        "type": simulation_type,
-                    },
-                }
-            ),
-            200,
-        )
+        return jsonify({
+            "message": "Courtroom simulation completed successfully",
+            "case_id": case_id,
+            "simulation": {
+                "id": simulation_id,
+                "text": transcript,
+                "evidence_count": len(evidence_analysis),
+                "generated_at": simulation_results["generated_at"].isoformat(),
+                "type": simulation_type,
+            },
+        }), 200
 
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 500
     except Exception as e:
-        print(f"❌ [FATAL] Simulation failed overall: {e}")
         return jsonify({"error": f"Simulation failed: {str(e)}"}), 500
 
 

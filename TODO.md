@@ -1,26 +1,39 @@
-# VisionService Optimization Task
+# Backend Refactoring Tasks
 
-## Current Work
-Optimizing the VisionService in backend/services/ai_services/vision_service.py to resolve deprecation warnings and improve GPU usage for BLIP-2 model loading.
+## Completed: VisionService Optimization
+- [x] Update Blip2Processor.from_pretrained to include use_fast=True
+- [x] Replace torch_dtype with dtype in Blip2ForConditionalGeneration.from_pretrained
+- [x] Add logging warning if GPU is not available after device detection
+- [x] Test the updated service to verify warnings are resolved and GPU usage if available
+- [x] Update TODO.md with completion status
+
+## Current Work: Backend Code Refactoring
+Refactoring backend for better maintainability, security, and performance.
 
 ## Key Technical Concepts
-- Transformers library (BLIP-2 model)
-- PyTorch for model loading and inference
-- GPU detection with torch.cuda.is_available()
-- Logging for diagnostics
+- Function decomposition (breaking large functions into smaller ones)
+- Configuration management
+- File upload security (MIME types, size limits, unique filenames)
+- Code organization and separation of concerns
 
 ## Relevant Files and Code
-- backend/services/ai_services/vision_service.py
-  - _init_blip2_model() method contains the model loading code with deprecated parameters.
+- backend/routes/simulation_route.py: Long start_courtroom_simulation function
+- backend/services/parsing/document_parsing_services.py: Hardcoded file size limit
+- backend/routes/upload.py: Missing security validations
+- backend/config.py: Basic config without validation
 
 ## Problem Solving
-- Fix deprecation: torch_dtype -> dtype
-- Fix slow processor: Add use_fast=True to Blip2Processor
-- Add GPU availability warning
+- Break monolithic function into focused methods
+- Use centralized configuration for limits
+- Add proper file validation and security measures
+- Improve error handling and logging
 
 ## Pending Tasks and Next Steps
-1. [x] Update Blip2Processor.from_pretrained to include use_fast=True
-2. [x] Replace torch_dtype with dtype in Blip2ForConditionalGeneration.from_pretrained
-3. [x] Add logging warning if GPU is not available after device detection
-4. [x] Test the updated service to verify warnings are resolved and GPU usage if available
-5. [x] Update TODO.md with completion status
+1. [x] Refactor start_courtroom_simulation into smaller functions (analyze_evidence, generate_simulation, create_reports, save_simulation_results)
+2. [x] Update document_parsing_services.py to use Config.MAX_CONTENT_LENGTH
+3. [x] Enhance upload.py with MIME type checking and unique filename generation
+4. [x] Add validation to config.py for required environment variables
+5. [x] Test simulation functionality after refactoring
+6. [x] Verify file upload security improvements
+7. [x] Run document parsing tests with various file types
+8. [x] Update TODO.md with completion status

@@ -1,4 +1,5 @@
 import os
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -40,4 +41,29 @@ class TestConfig(Config):
     TESTING = True
     MONGO_URI = 'mongodb://localhost:27017/jurix_test_db'
     DB_NAME = 'jurix_test_db'
-    JWT_SECRET = 'test-secret-key-do-not-use-in-production'         
+    JWT_SECRET = 'test-secret-key-do-not-use-in-production'
+
+
+def validate_config(config_class=Config):
+    """Validate required configuration values"""
+    required_vars = [
+        'JWT_SECRET',
+        'MONGO_URI'
+    ]
+    
+    missing_vars = []
+    for var in required_vars:
+        if not getattr(config_class, var):
+            missing_vars.append(var)
+    
+    if missing_vars:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    
+    # Additional validations
+    if config_class.MAX_CONTENT_LENGTH <= 0:
+        raise ValueError("MAX_CONTENT_LENGTH must be positive")
+    
+    if config_class.ENVIRONMENT not in ['development', 'production', 'testing']:
+        logging.warning(f"Unknown ENVIRONMENT: {config_class.ENVIRONMENT}")
+    
+    logging.info("✅ Configuration validation passed")

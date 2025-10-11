@@ -11,6 +11,9 @@ from datetime import datetime
 import hashlib
 import base64
 
+# Import configuration
+from config import Config
+
 # Import Gemini service for AI-powered text extraction
 try:
     from backend.services.ai_services.gemini_service import GeminiService
@@ -81,9 +84,9 @@ class DocumentParser:
         if ext not in self.supported_extensions:
             return False, f"Unsupported file type: {ext}"
         
-        # Check file size (max 25MB)
+        # Check file size
         file_size = os.path.getsize(file_path)
-        max_size = 25 * 1024 * 1024  # 25MB
+        max_size = Config.MAX_CONTENT_LENGTH
         if file_size > max_size:
             return False, f"File too large: {file_size / (1024*1024):.1f}MB (max 25MB)"
         

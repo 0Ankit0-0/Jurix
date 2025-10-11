@@ -1,9 +1,11 @@
 import os
 import uuid
+import mimetypes
 from flask import Blueprint, request, jsonify, send_from_directory
 from werkzeug.utils import secure_filename
 from PIL import Image
 
+from config import Config
 from model.user import update_user, get_user_by_id
 
 upload_bp = Blueprint('upload', __name__)
@@ -25,6 +27,46 @@ def allowed_file(filename, allowed_exts):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_exts
 
 
+def validate_file(file, allowed_exts):
+    """Validate file type, size, and MIME type"""
+    if not file or file.filename == '':
+        return False, 'No file selected'
+
+    if not allowed_file(file.filename, allowed_exts):
+        return False, f'Invalid file type. Allowed: {", ".join(allowed_exts)}'
+
+    # Check file size
+    file.seek(0, os.SEEK_END)
+    file_size = file.tell()
+    file.seek(0)
+    if file_size > Config.MAX_CONTENT_LENGTH:
+        return False, f'File too large. Max size: {Config.MAX_CONTENT_LENGTH / (1024*1024)}MB'
+
+    # Check MIME type
+    mime_type, _ = mimetypes.guess_type(file.filename)
+    if not mime_type:
+        return False, 'Unable to determine file type'
+
+    # Basic MIME validation (can be extended)
+    allowed_mimes = {
+        'pdf': 'application/pdf',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'doc': 'application/msword',
+        'txt': 'text/plain',
+        'gif': 'image/gif',
+        'webp': 'image/webp'
+    }
+    ext = file.filename.rsplit('.', 1)[1].lower()
+    expected_mime = allowed_mimes.get(ext)
+    if expected_mime and not mime_type.startswith(expected_mime.split('/')[0]):
+        return False, f'MIME type mismatch. Expected {expected_mime}, got {mime_type}'
+
+    return True, 'Valid'
+
+
 # ---------------- Evidence Upload ---------------- #
 @upload_bp.route('/upload', methods=['POST'])
 def upload_file():
@@ -32,23 +74,27 @@ def upload_file():
         return jsonify({'error': 'No file part'}), 400
 
     file = request.files['file']
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
 
-    if file and allowed_file(file.filename, ALLOWED_EVIDENCE_EXTENSIONS):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(EVIDENCE_DIR, filename)
-        file.save(file_path)
-        return jsonify({
-            'message': 'File uploaded successfully',
-            'filename': filename,
-            'url': f"/uploads/evidence/{filename}"
-        }), 200
+    # Validate file
+    is_valid, message = validate_file(file, ALLOWED_EVIDENCE_EXTENSIONS)
+    if not is_valid:
+        return jsonify({'error': message}), 400
+
+    # Generate unique filename
+    original_filename = secure_filename(file.filename)
+    ext = original_filename.rsplit('.', 1)[1].lower()
+    unique_filename = f"{uuid.uuid4().hex[:8]}_{original_filename}"
+    file_path = os.path.join(EVIDENCE_DIR, unique_filename)
+
+    # Save file
+    file.save(file_path)
 
     return jsonify({
-        'error': 'Invalid file type',
-        'allowed_extensions': list(ALLOWED_EVIDENCE_EXTENSIONS)
-    }), 400
+        'message': 'File uploaded successfully',
+        'filename': unique_filename,
+        'original_filename': original_filename,
+        'url': f"/uploads/evidence/{unique_filename}"
+    }), 200
 
 
 # ---------------- Avatar Upload ---------------- #
@@ -65,11 +111,11 @@ def upload_avatar():
 
     if not user_id:
         return jsonify({'error': 'User ID is required'}), 400
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
 
-    if not allowed_file(file.filename, ALLOWED_AVATAR_EXTENSIONS):
-        return jsonify({'error': 'Invalid file type'}), 400
+    # Validate file
+    is_valid, message = validate_file(file, ALLOWED_AVATAR_EXTENSIONS)
+    if not is_valid:
+        return jsonify({'error': message}), 400
 
     # Unique filename
     ext = file.filename.rsplit('.', 1)[1].lower()
