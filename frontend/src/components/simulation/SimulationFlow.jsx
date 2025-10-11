@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import CaseForm from "@/components/Case/CaseForm";
 import ProcessingScreen from "@/components/simulation/ProcessingScreen";
+import { socket, simulationAPI } from "@/services/api";
 
 /**
  * Main Simulation Flow Component
@@ -14,32 +15,59 @@ export default function SimulationFlow() {
   const [caseId, setCaseId] = useState(null);
   const [processingProgress, setProcessingProgress] = useState(0);
 
-  // Simulate processing progress
+  // Socket listeners for real-time progress
   useEffect(() => {
-    if (currentScreen === "processing") {
-      const interval = setInterval(() => {
-        setProcessingProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setTimeout(() => {
-              setCurrentScreen("simulation");
-              navigate(`/simulation/${caseId}`);
-            }, 500);
-            return 100;
-          }
-          return prev + 5;
-        });
-      }, 300);
+    if (currentScreen === "processing" && caseId) {
+      socket.emit('join', caseId);
 
-      return () => clearInterval(interval);
+      const handleEvidenceProgress = (data) => {
+        setProcessingProgress(data.progress);
+      };
+
+      const handleSimulationProgress = (data) => {
+        setProcessingProgress(data.progress);
+      };
+
+      const handleComplete = () => {
+        setProcessingProgress(100);
+        setTimeout(() => {
+          setCurrentScreen("simulation");
+          navigate(`/simulation/${caseId}`);
+        }, 500);
+      };
+
+      const handleError = (data) => {
+        toast.error(data.message);
+        setCurrentScreen("create");
+      };
+
+      socket.on('evidence_progress', handleEvidenceProgress);
+      socket.on('simulation_progress', handleSimulationProgress);
+      socket.on('complete', handleComplete);
+      socket.on('error', handleError);
+
+      return () => {
+        socket.off('evidence_progress', handleEvidenceProgress);
+        socket.off('simulation_progress', handleSimulationProgress);
+        socket.off('complete', handleComplete);
+        socket.off('error', handleError);
+      };
     }
   }, [currentScreen, caseId, navigate]);
 
   // Handle case creation form submission
-  const handleCreateCase = (newCaseId) => {
+  const handleCreateCase = async (newCaseId) => {
     setCaseId(newCaseId);
     setCurrentScreen("processing");
     setProcessingProgress(0);
+
+    // Start simulation
+    try {
+      await simulationAPI.start(newCaseId);
+    } catch (error) {
+      toast.error("Failed to start simulation");
+      setCurrentScreen("create");
+    }
   };
 
   // Render current screen

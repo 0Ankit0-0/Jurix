@@ -70,12 +70,26 @@ def like_discussion(discussion_id):
         print(f"❌ Error liking discussion: {e}")
         return False
 
+def get_discussion_by_id(discussion_id):
+    """Get a single discussion by ID"""
+    try:
+        collection = get_discussions_collection()
+        discussion = collection.find_one({"_id": ObjectId(discussion_id)})
+        if discussion:
+            discussion['_id'] = str(discussion['_id'])
+            print(f"✅ Discussion found: {discussion_id}")
+            return discussion
+        return None
+    except Exception as e:
+        print(f"❌ Error getting discussion: {e}")
+        return None
+
 def delete_discussion(discussion_id, user_id):
     """Delete a discussion (only by the user who created it)"""
     try:
         collection = get_discussions_collection()
         result = collection.delete_one({"_id": ObjectId(discussion_id), "user_id": user_id})
-        
+
         success = result.deleted_count > 0
         if success:
             print(f"✅ Discussion deleted: {discussion_id}")

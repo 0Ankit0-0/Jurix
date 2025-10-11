@@ -226,4 +226,4 @@ const WaveGridBackground = () => {
   );
 };
 
-export default WaveGridBackground;
+export default WaveGridBackground; 

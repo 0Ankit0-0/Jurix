@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from socketio_instance import socketio
 from routes.auth import user_bp
 from routes.case_route import case_bp
 from routes.simulation_route import simulation_bp
@@ -54,6 +55,8 @@ CORS(app,
      expose_headers=["Content-Range", "X-Content-Range"],
      max_age=3600
 )
+
+
 
 @app.before_request
 def handle_preflight():
@@ -185,6 +188,7 @@ if __name__ == "__main__":
     print(f"🔧 Environment: {os.getenv('ENVIRONMENT', 'development')}")
     print(f"🔑 JWT Secret configured: {'Yes' if os.getenv('JWT_SECRET') else 'No'}")
     print(f"🗄️ MongoDB URI configured: {'Yes' if os.getenv('MONGO_URI') else 'No'}")
-    
-    app.run(debug=True, host="0.0.0.0", port=5001 )
+
+    socketio.init_app(app, cors_allowed_origins="*")
+    socketio.run(app, debug=True, host="0.0.0.0", port=5001)
     

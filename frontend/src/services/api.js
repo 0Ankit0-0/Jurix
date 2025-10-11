@@ -1,10 +1,16 @@
 import axios from "axios";
+import io from "socket.io-client";
 import { toast } from "react-hot-toast";
 import { handleApiError, apiConfig, UPLOAD_TIMEOUT, SIMULATION_TIMEOUT, retryRequest } from "@/utils/apiUtils";
 
 const api = axios.create({
   ...apiConfig,
   withCredentials: true
+});
+
+// Socket.IO connection
+const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:5001', {
+  withCredentials: true,
 });
 
 // Request interceptor - runs before every request
@@ -161,3 +167,4 @@ export const chatbotAPI = {
 };
 
 export default api;
+export { socket };

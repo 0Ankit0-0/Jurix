@@ -12,9 +12,10 @@ class OllamaService:
     def __init__(self, base_url: str = "http://localhost:11434"):
         self.base_url = base_url
         self.models = {
-            "fast": "gemma:2b-instruct",      # Fast responses
-            "reasoning": "mistral:7b-instruct", # Complex reasoning
-            "vision": "llava:7b"              # Vision model for image processing
+            "fast": "gemma:2b",                    # Fast responses
+            "reasoning": "mistral:7b",             # Complex reasoning
+            "vision": "llava:7b",                  # Vision model for image processing
+            "indian_law": "kartikm7/indian-lawen2-1.5b:latest"  # Indian law specific model
         }
         self.default_model = "reasoning"
     

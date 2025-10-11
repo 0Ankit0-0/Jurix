@@ -43,6 +43,7 @@
     "react-router-dom": "^7.8.1",
     "react-tsparticles": "^2.12.2",
     "shadcn-ui": "^0.9.5",
+    "socket.io-client": "^4.8.1",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.12",
     "tsparticles-engine": "^2.12.0",

@@ -1,10 +1,11 @@
-from db.mongo import case_collection
+from db.mongo import get_case_collection
 from bson import ObjectId
 from datetime import datetime
 
 def create_case(case_data):
     """Creates a new case in the database"""
-    if case_collection is None:
+    collection = get_case_collection()
+    if collection is None:
         raise ConnectionError("Database connection not available")
     try:
         # Add timestamp if not provided
@@ -12,8 +13,8 @@ def create_case(case_data):
             case_data['created_at'] = datetime.utcnow()
         if 'updated_at' not in case_data:
             case_data['updated_at'] = datetime.utcnow()
-            
-        result = case_collection.insert_one(case_data)
+
+        result = collection.insert_one(case_data)
         print(f"✅ Case created with ID: {result.inserted_id}")
         return str(result.inserted_id)
     except Exception as e:
@@ -37,7 +38,8 @@ def get_case_by_id(case_id):
     if not case_id:
         raise ValueError("Case ID cannot be empty")
         
-    if case_collection is None:
+    collection = get_case_collection()
+    if collection is None:
         raise ConnectionError("Database connection not available")
         
     try:
@@ -45,7 +47,7 @@ def get_case_by_id(case_id):
         print(f"🔍 Attempting to retrieve case: {case_id}")
         
         # Query with timeout
-        case = case_collection.find_one(
+        case = collection.find_one(
             {"case_id": case_id},
             max_time_ms=5000  # 5 second timeout
         )
@@ -64,7 +66,7 @@ def get_case_by_id(case_id):
             print(f"✅ Case found: {case_id} (status: {case.get('status', 'unknown')})")
             
             # Add last accessed timestamp
-            case_collection.update_one(
+            collection.update_one(
                 {"case_id": case_id},
                 {"$set": {"last_accessed": datetime.utcnow()}}
             )
@@ -83,13 +85,14 @@ def get_case_by_id(case_id):
 
 def update_case(case_id, update_data):
     """Update a case"""
-    if case_collection is None:
+    collection = get_case_collection()
+    if collection is None:
         raise ConnectionError("Database connection not available")
     try:
         # Always update the timestamp
         update_data['updated_at'] = datetime.utcnow()
         
-        result = case_collection.update_one(
+        result = collection.update_one(
             {"case_id": case_id},
             {"$set": update_data}
         )
@@ -106,10 +109,11 @@ def update_case(case_id, update_data):
 
 def get_cases_by_user_id(user_id):
     """Get all cases created by a specific user"""
-    if case_collection is None:
+    collection = get_case_collection()
+    if collection is None:
         raise ConnectionError("Database connection not available")
     try:
-        cases = list(case_collection.find({"user_id": user_id}))
+        cases = list(collection.find({"user_id": user_id}))
         # Convert ObjectId to string for all cases
         for case in cases:
             case['_id'] = str(case['_id'])
@@ -122,10 +126,11 @@ def get_cases_by_user_id(user_id):
 
 def get_cases_by_status(status):
     """Get all cases with a specific status"""
-    if case_collection is None:
+    collection = get_case_collection()
+    if collection is None:
         raise ConnectionError("Database connection not available")
     try:
-        cases = list(case_collection.find({"status": status}))
+        cases = list(collection.find({"status": status}))
         # Convert ObjectId to string for all cases
         for case in cases:
             case['_id'] = str(case['_id'])
@@ -138,10 +143,11 @@ def get_cases_by_status(status):
 
 def delete_case(case_id):
     """Delete a case (be careful with this!)"""
-    if case_collection is None:
+    collection = get_case_collection()
+    if collection is None:
         raise ConnectionError("Database connection not available")
     try:
-        result = case_collection.delete_one({"case_id": case_id})
+        result = collection.delete_one({"case_id": case_id})
         success = result.deleted_count > 0
         if success:
             print(f"✅ Case deleted: {case_id}")
@@ -154,7 +160,8 @@ def delete_case(case_id):
 
 def get_all_cases(page=1, per_page=20, filters=None):
     """Get cases with pagination and filters"""
-    if case_collection is None:
+    collection = get_case_collection()
+    if collection is None:
         raise ConnectionError("Database connection not available")
     
     try:
@@ -171,11 +178,11 @@ def get_all_cases(page=1, per_page=20, filters=None):
                 query['is_public'] = filters['is_public']
         
         # Get total count
-        total = case_collection.count_documents(query)
+        total = collection.count_documents(query)
         
         # Get paginated results
         cases = list(
-            case_collection
+            collection
             .find(query)
             .sort("created_at", -1)
             .skip(skip)
@@ -201,10 +208,11 @@ def get_all_cases(page=1, per_page=20, filters=None):
     
 def add_evidence_to_case(case_id, evidence_id):
     """Add evidence ID to case's evidence list"""
-    if case_collection is None:
+    collection = get_case_collection()
+    if collection is None:
         raise ConnectionError("Database connection not available")
     try:
-        result = case_collection.update_one(
+        result = collection.update_one(
             {"case_id": case_id},
             {"$addToSet": {"evidence_files": evidence_id}}  # addToSet prevents duplicates
         )
@@ -219,7 +227,8 @@ def add_evidence_to_case(case_id, evidence_id):
 
 def set_case_privacy(case_id, is_public=False):
     """Set case as public or private"""
-    if case_collection is None:
+    collection = get_case_collection()
+    if collection is None:
         raise ConnectionError("Database connection not available")
     try:
         update_data = {
@@ -227,7 +236,7 @@ def set_case_privacy(case_id, is_public=False):
             'updated_at': datetime.utcnow()
         }
         
-        result = case_collection.update_one(
+        result = collection.update_one(
             {"case_id": case_id},
             {"$set": update_data}
         )
@@ -243,7 +252,8 @@ def set_case_privacy(case_id, is_public=False):
 
 def get_public_cases(limit=10):
     """Get all public cases"""
-    if case_collection is None:
+    collection = get_case_collection()
+    if collection is None:
         raise ConnectionError("Database connection not available")
     try:
         # ✅ FIX: Use aggregation to join user data for author name
@@ -292,7 +302,7 @@ def get_public_cases(limit=10):
                 }
             }
         ]
-        cases = list(case_collection.aggregate(pipeline))
+        cases = list(collection.aggregate(pipeline))
         
         # Convert ObjectId to string for all cases
         for case in cases:

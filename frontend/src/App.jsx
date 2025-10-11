@@ -228,8 +228,8 @@ function AnimatedRoutes() {
 function App() {
   return (
     <ErrorBoundary fallbackMessage="Something went wrong with the application. Please refresh the page.">
-      <WaveGridBackground />
       <Router>
+        <BackgroundWrapper />
         <Navbar />
         <Suspense fallback={<PageLoader />}>
           <AnimatedRoutes />
@@ -238,6 +238,26 @@ function App() {
       </Router>
     </ErrorBoundary>
   );
+}
+
+function BackgroundWrapper() {
+  const location = useLocation();
+
+  // Paths with specific backgrounds to avoid overlap with global WaveGridBackground
+  const pathsWithSpecificBg = [
+    "/public-cases",
+    
+    "/case",
+    "/simulation",
+    "/process",
+    "/review",
+    "/login",
+    "/signup"
+  ];
+
+  const hasSpecificBg = pathsWithSpecificBg.some(path => location.pathname.startsWith(path));
+
+  return !hasSpecificBg ? <WaveGridBackground /> : null;
 }
 
 export default App;

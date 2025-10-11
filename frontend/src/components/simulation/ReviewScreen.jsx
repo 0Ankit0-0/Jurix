@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { caseAPI, simulationAPI } from "@/services/api";
+import { caseAPI, simulationAPI, socket } from "@/services/api";
 import toast from "react-hot-toast";
 import { ArrowLeft, Play, Loader2, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import ReviewBackground from "@/components/ui/ReviewBackground";
+import { Progress } from "@/components/ui/progress";
 
 export default function ReviewScreen() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export default function ReviewScreen() {
   const [loading, setLoading] = useState(true);
   const [simulating, setSimulating] = useState(false);
   const [caseData, setCaseData] = useState(null);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     async function fetchCase() {
@@ -31,6 +33,45 @@ export default function ReviewScreen() {
     }
     fetchCase();
   }, [caseId]);
+
+  // Socket listeners for progress during simulation start
+  useEffect(() => {
+    if (simulating && caseId) {
+      socket.emit('join', caseId);
+
+      const handleEvidenceProgress = (data) => {
+        setProgress(data.progress);
+      };
+
+      const handleSimulationProgress = (data) => {
+        setProgress(data.progress);
+      };
+
+      const handleComplete = () => {
+        setProgress(100);
+        setTimeout(() => {
+          navigate(`/simulation/${caseId}`);
+        }, 500);
+      };
+
+      const handleError = (data) => {
+        toast.error(data.message);
+        setSimulating(false);
+      };
+
+      socket.on('evidence_progress', handleEvidenceProgress);
+      socket.on('simulation_progress', handleSimulationProgress);
+      socket.on('complete', handleComplete);
+      socket.on('error', handleError);
+
+      return () => {
+        socket.off('evidence_progress', handleEvidenceProgress);
+        socket.off('simulation_progress', handleSimulationProgress);
+        socket.off('complete', handleComplete);
+        socket.off('error', handleError);
+      };
+    }
+  }, [simulating, caseId, navigate]);
 
   const handleStartSimulation = async () => {
     try {
@@ -103,26 +144,29 @@ export default function ReviewScreen() {
           )}
 
         </CardContent>
-        <CardFooter className="flex justify-between gap-4 p-6 bg-muted/30 border-t">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/dashboard')}
-            disabled={simulating}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <Button
-            onClick={handleStartSimulation}
-            disabled={simulating}
-            className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-xl"
-          >
-            {simulating ? (
-              <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Simulating...</>
-            ) : (
-              <><Play className="h-4 w-4 mr-2" /> Confirm & Run Simulation</>
-            )}
-          </Button>
+        <CardFooter className="flex flex-col gap-4 p-6 bg-muted/30 border-t">
+          {simulating && <Progress value={progress} className="w-full" />}
+          <div className="flex justify-between gap-4 w-full">
+            <Button
+              variant="outline"
+              onClick={() => navigate('/dashboard')}
+              disabled={simulating}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
+            </Button>
+            <Button
+              onClick={handleStartSimulation}
+              disabled={simulating}
+              className="bg-gradient-to-r from-primary to-accent text-primary-foreground shadow-lg hover:shadow-xl"
+            >
+              {simulating ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Simulating...</>
+              ) : (
+                <><Play className="h-4 w-4 mr-2" /> Confirm & Run Simulation</>
+              )}
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>

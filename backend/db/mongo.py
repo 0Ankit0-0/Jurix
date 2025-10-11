@@ -103,6 +103,39 @@ user_collection = db["users"] if db is not None else None
 evidence_collection = db["evidence"] if db is not None else None
 
 # ------------------------------
+# Collection getters with reconnection
+# ------------------------------
+def get_case_collection():
+    """Get case collection with connection retry"""
+    global db, case_collection
+    if case_collection is None:
+        if db is None:
+            init_mongo_client()
+        if db is not None:
+            case_collection = db["cases"]
+    return case_collection
+
+def get_user_collection():
+    """Get user collection with connection retry"""
+    global db, user_collection
+    if user_collection is None:
+        if db is None:
+            init_mongo_client()
+        if db is not None:
+            user_collection = db["users"]
+    return user_collection
+
+def get_evidence_collection():
+    """Get evidence collection with connection retry"""
+    global db, evidence_collection
+    if evidence_collection is None:
+        if db is None:
+            init_mongo_client()
+        if db is not None:
+            evidence_collection = db["evidence"]
+    return evidence_collection
+
+# ------------------------------
 # Helper functions
 # ------------------------------
 def get_db():

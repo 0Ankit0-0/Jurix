@@ -151,16 +151,19 @@ def generate_response_with_fallback(
     # Tier 2: Try Ollama
     if ollama_service.is_available():
         try:
+            # Use Indian law model for legal queries, reasoning for others
+            model_type = "indian_law" if any(word in prompt.lower() for word in ["law", "legal", "court", "case", "ipc", "crpc", "constitution", "contract", "criminal", "civil"]) else "reasoning"
+
             response = ollama_service.generate_response(
                 prompt=prompt,
                 system_prompt=system_prompt,
-                model_type="reasoning",
+                model_type=model_type,
                 temperature=0.7,
                 max_tokens=max_tokens,
             )
 
             if response and len(response.strip()) > 20:
-                return {"response": response, "provider": "ollama", "success": True}
+                return {"response": response, "provider": f"ollama_{model_type}", "success": True}
         except Exception as e:
             print(f"⚠️ Ollama failed: {e}")
 

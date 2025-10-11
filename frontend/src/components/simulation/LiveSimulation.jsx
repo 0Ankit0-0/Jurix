@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Download, Play, Pause, RotateCcw, MessageCircle, Loader2 } from "lucide-react";
-import { simulationAPI } from "@/services/api";
+import { simulationAPI, socket } from "@/services/api";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import ChatQuestionInput from "./ChatQuestionInput";
@@ -29,6 +29,9 @@ const LiveSimulation = () => {
   const [typingRole, setTypingRole] = useState("Judge");
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
+  const [turns, setTurns] = useState([]);
+  const [evidenceProgress, setEvidenceProgress] = useState({});
+  const [simulationProgress, setSimulationProgress] = useState({});
 
   useEffect(() => {
     // Check for invalid caseId
@@ -38,38 +41,81 @@ const LiveSimulation = () => {
       return;
     }
 
-    const checkStatusAndFetch = async () => {
+    // Join socket room
+    socket.emit('join', caseId);
+
+    // Socket listeners
+    socket.on('evidence_progress', (data) => {
+      setEvidenceProgress(data);
+      setProgress(data.progress);
+    });
+
+    socket.on('simulation_progress', (data) => {
+      setSimulationProgress(data);
+      setProgress(data.progress);
+      setCurrentStep(data.step || currentStep);
+    });
+
+    socket.on('turn', (turn) => {
+      setTurns(prev => [...prev, turn]);
+      setIsTyping(false);
+    });
+
+    socket.on('thinking', (data) => {
+      setIsTyping(true);
+      setTypingRole(data.role);
+    });
+
+    socket.on('complete', async (data) => {
+      setIsSimulating(false);
+      // Fetch results
       try {
-        // First check status
+        const response = await simulationAPI.getResults(caseId);
+        setSimulation(response.data.simulation);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load simulation");
+        setLoading(false);
+      }
+    });
+
+    socket.on('error', (data) => {
+      setError(data.message);
+      setLoading(false);
+    });
+
+    // Check initial status
+    const checkInitialStatus = async () => {
+      try {
         const statusResponse = await simulationAPI.getStatus(caseId);
         const statusData = statusResponse.data;
 
-        // Update progress from backend
-        if (statusData.progress !== undefined) {
-          setProgress(statusData.progress);
-        }
-        if (statusData.step !== undefined) {
-          setCurrentStep(statusData.step);
-        }
-
         if (statusData.completed) {
           setIsSimulating(false);
-          // Fetch results
           const response = await simulationAPI.getResults(caseId);
           setSimulation(response.data.simulation);
           setLoading(false);
         } else {
-          // Still simulating, wait
-          setTimeout(checkStatusAndFetch, 2000);
+          setIsSimulating(true);
+          setLoading(false); // Show live view
         }
       } catch (err) {
-        console.error("Error checking status:", err);
+        console.error("Error checking initial status:", err);
         setError("Failed to load simulation");
         setLoading(false);
       }
     };
 
-    checkStatusAndFetch();
+    checkInitialStatus();
+
+    return () => {
+      socket.off('evidence_progress');
+      socket.off('simulation_progress');
+      socket.off('turn');
+      socket.off('thinking');
+      socket.off('complete');
+      socket.off('error');
+    };
   }, [caseId, navigate]);
 
   const handleDownloadReport = async () => {
@@ -140,7 +186,7 @@ const LiveSimulation = () => {
     };
   }, [isPlaying, simulation, playbackSpeed, isSimulating]);
 
-  if (loading || isSimulating) {
+  if (loading || (isSimulating && turns.length === 0)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-6">
@@ -200,7 +246,7 @@ const LiveSimulation = () => {
     );
   }
 
-  const { turns, simulation_text } = simulation;
+  const { simulation_text } = simulation;
 
   return (
     <div className="min-h-screen relative">

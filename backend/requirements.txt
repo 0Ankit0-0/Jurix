@@ -58,3 +58,6 @@ requests==2.32.3
 # Utilities
 python-magic==0.4.27
 validators==0.22.0
+
+# Real-time Communication
+flask-socketio==5.3.6
