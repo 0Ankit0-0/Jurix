@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime
 from typing import Dict, Any, Optional
 import os
+import json
 
 # Import AI services
 from services.ai_services.gemini_service import GeminiService
@@ -77,11 +78,19 @@ def build_case_context(case_id: str) -> Optional[Dict[str, Any]]:
         # Get evidence
         evidence_list = list_evidences({"case_id": case_id})
 
+        # Parse parties field if it's a JSON string
+        parties = case.get("parties", {})
+        if isinstance(parties, str):
+            try:
+                parties = json.loads(parties)
+            except json.JSONDecodeError:
+                parties = {}
+
         context = {
             "case_title": case.get("title", "Unknown"),
             "case_type": case.get("case_type", "Unknown"),
             "description": case.get("description", ""),
-            "parties": case.get("parties", {}),
+            "parties": parties,
             "evidence_count": len(evidence_list),
             "evidence_summary": [],
         }
