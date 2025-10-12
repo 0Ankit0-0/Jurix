@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { FileText, Search, Brain, CircleCheck } from "lucide-react";
 import { simulationAPI } from "@/services/api";
 import toast from "react-hot-toast";
-import ProcessingBackground from "@/components/ui/ProcessingBackground";
+import WaveGridBackground from "@/components/ui/WaveGridBackground";
 
 /** Get icon for processing step */
 function getStepIcon(index) {
@@ -204,7 +204,7 @@ export default function ProcessingScreen() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4">
-      <ProcessingBackground progress={progress / 100} />
+      <WaveGridBackground />
       <Card className="w-full max-w-2xl shadow-2xl border-border/30 glass-card">
         <CardHeader className="space-y-4 text-center pb-8">
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg">

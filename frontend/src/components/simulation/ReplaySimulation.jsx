@@ -9,7 +9,7 @@ import { simulationAPI } from "@/services/api";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import ChatQuestionInput from "./ChatQuestionInput";
-import SimulationBackground from "@/components/ui/SimulationBackground";
+import WaveGridBackground from "@/components/ui/WaveGridBackground";
 import FormattedTranscript from "./FormattedTranscript";
 
 const ReplaySimulation = () => {
@@ -155,7 +155,7 @@ const ReplaySimulation = () => {
 
   return (
     <div className="min-h-screen relative">
-      <SimulationBackground />
+      <WaveGridBackground />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">

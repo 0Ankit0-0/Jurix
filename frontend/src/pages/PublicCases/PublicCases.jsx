@@ -10,7 +10,7 @@ import { useDebounce } from "@/hooks/useDebounce"
 import { SearchInput } from "@/components/ui/search-input"
 import { toast } from "react-hot-toast"
 import { useNavigate } from "react-router-dom"
-import ParallaxBackground from "@/components/ui/ParallaxBackground"
+import WaveGridBackground from "@/components/ui/WaveGridBackground"
 
 const CASE_TYPES = ["All", "Criminal Law", "Civil Law", "Corporate Law", "Family Law", "IP Law", "Contract Law"]
 const SORT_OPTIONS = [
@@ -128,7 +128,7 @@ export default function PublicCases() {
 
   return (
     <div className="min-h-screen relative bg-aurora">
-      <ParallaxBackground />
+      <WaveGridBackground />
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Header */}
         <div className="flex flex-col items-center justify-center text-center mb-10">

@@ -6,7 +6,7 @@ import { caseAPI, simulationAPI, socket } from "@/services/api";
 import toast from "react-hot-toast";
 import { ArrowLeft, Play, Loader2, FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import ReviewBackground from "@/components/ui/ReviewBackground";
+import WaveGridBackground from "@/components/ui/WaveGridBackground";
 import { Progress } from "@/components/ui/progress";
 
 export default function ReviewScreen() {
@@ -109,7 +109,7 @@ export default function ReviewScreen() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-6">
-      <ReviewBackground />
+      <WaveGridBackground />
       <Card className="w-full max-w-3xl shadow-2xl glass-card border-border/30">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-heading font-bold">Review Your Case</CardTitle>

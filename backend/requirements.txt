@@ -20,7 +20,6 @@ reportlab==4.1.0  # For PDF generation
 
 # OCR Engines (CPU-Only)
 easyocr==1.7.1
-pytesseract==0.3.10
 opencv-python-headless==4.10.0.84
 
 # AI Services

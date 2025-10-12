@@ -40,11 +40,23 @@ class DocumentParser:
         self.ocr_reader = None
         self._ocr_initialized = False
 
-        # Initialize Gemini service for AI-powered text extraction
-        self.gemini_service = GeminiService() if GEMINI_AVAILABLE else None
-        if self.gemini_service and not self.gemini_service.is_available():
-            logging.warning("Gemini service initialized but not available")
+        # Check GPU availability
+        try:
+            import torch
+            self.has_gpu = torch.cuda.is_available()
+        except:
+            self.has_gpu = False
+
+        # Only load heavy models on GPU
+        if not self.has_gpu:
+            logging.info("⚠️ No GPU - using CPU-optimized OCR only")
             self.gemini_service = None
+        else:
+            # Initialize Gemini service for AI-powered text extraction
+            self.gemini_service = GeminiService() if GEMINI_AVAILABLE else None
+            if self.gemini_service and not self.gemini_service.is_available():
+                logging.warning("Gemini service initialized but not available")
+                self.gemini_service = None
 
         # Supported file extensions
         self.supported_extensions = {
@@ -61,18 +73,18 @@ class DocumentParser:
         }
     
     def _init_ocr(self):
-        """Lazy initialization of EasyOCR reader"""
+        """Lazy initialization of EasyOCR reader with GPU support if available"""
         if self._ocr_initialized:
             return
-        
+
         try:
             import easyocr
-            self.ocr_reader = easyocr.Reader(['en'], gpu=False)
-            logging.info("✅ EasyOCR initialized successfully")
+            self.ocr_reader = easyocr.Reader(['en'], gpu=self.has_gpu)
+            logging.info(f"✅ EasyOCR initialized successfully with GPU: {self.has_gpu}")
         except Exception as e:
             logging.error(f"❌ Failed to initialize EasyOCR: {e}")
             self.ocr_reader = None
-        
+
         self._ocr_initialized = True
     
     def validate_file(self, file_path):
@@ -205,53 +217,57 @@ class DocumentParser:
                             # Priority: BLIP (fast local) → LLaVA (local AI) → OCR (last resort)
                             extracted_text = None
 
-                            # 1. Try BLIP first (fast local model)
-                            import tempfile
-                            with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
-                                temp_file.write(image_bytes)
-                                temp_path = temp_file.name
+                            # Try AI models only on GPU
+                            if self.has_gpu:
+                                import tempfile
+                                with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as temp_file:
+                                    temp_file.write(image_bytes)
+                                    temp_path = temp_file.name
 
-                            try:
-                                from services.ai_services.vision_service import VisionService
-                                vision_service = VisionService(use_low_res=True, max_image_size=512)
-                                logging.info(f"🎨 Extracting from PDF page {page_num + 1}, image {img_index + 1} using BLIP (priority)")
-                                blip_result = vision_service.process_image(temp_path, tasks=["caption", "scene"])
-                                
-                                blip_text = ""
-                                if blip_result.get("caption"):
-                                    blip_text += blip_result["caption"] + " "
-                                if blip_result.get("scene"):
-                                    scene_info = blip_result["scene"]
-                                    if isinstance(scene_info, dict):
-                                        blip_text += " ".join([str(v) for v in scene_info.values() if v])
-                                
-                                if blip_text and len(blip_text.strip()) > 0:
-                                    ai_content += f"\n--- Page {page_num + 1}, Image {img_index + 1} BLIP Extracted ---\n"
-                                    ai_content += blip_text.strip()
-                                    images_processed += 1
-                                    logging.info(f"✅ BLIP extracted text from PDF image {img_index + 1}")
-                                    os.unlink(temp_path)
-                                    continue  # Success, skip to next image
-                            except Exception as blip_error:
-                                logging.warning(f"⚠️ BLIP failed for PDF image {img_index + 1}: {blip_error}")
+                                # 1. Try BLIP first (fast local model)
+                                try:
+                                    from services.ai_services.vision_service import VisionService
+                                    vision_service = VisionService(use_low_res=True, max_image_size=512)
+                                    logging.info(f"🎨 Extracting from PDF page {page_num + 1}, image {img_index + 1} using BLIP (priority)")
+                                    blip_result = vision_service.process_image(temp_path, tasks=["caption", "scene"])
+                                    
+                                    blip_text = ""
+                                    if blip_result.get("caption"):
+                                        blip_text += blip_result["caption"] + " "
+                                    if blip_result.get("scene"):
+                                        scene_info = blip_result["scene"]
+                                        if isinstance(scene_info, dict):
+                                            blip_text += " ".join([str(v) for v in scene_info.values() if v])
+                                    
+                                    if blip_text and len(blip_text.strip()) > 0:
+                                        ai_content += f"\n--- Page {page_num + 1}, Image {img_index + 1} BLIP Extracted ---\n"
+                                        ai_content += blip_text.strip()
+                                        images_processed += 1
+                                        logging.info(f"✅ BLIP extracted text from PDF image {img_index + 1}")
+                                        os.unlink(temp_path)
+                                        continue  # Success, skip to next image
+                                except Exception as blip_error:
+                                    logging.warning(f"⚠️ BLIP failed for PDF image {img_index + 1}: {blip_error}")
 
-                            # 2. Try LLaVA vision model (second fallback)
-                            try:
-                                from services.ai_services.ai_agents.ollama_service import ollama_service
-                                logging.info(f"🖼️ Extracting from PDF page {page_num + 1}, image {img_index + 1} using LLaVA (fallback)")
-                                extracted_text = ollama_service.process_image(temp_path)
-                                if extracted_text and len(extracted_text.strip()) > 0:
-                                    ai_content += f"\n--- Page {page_num + 1}, Image {img_index + 1} LLaVA Extracted ---\n"
-                                    ai_content += extracted_text
-                                    images_processed += 1
-                                    logging.info(f"✅ LLaVA extracted text from PDF image {img_index + 1}")
-                                    os.unlink(temp_path)
-                                    continue  # Success, skip to next image
-                            except Exception as llava_error:
-                                logging.warning(f"⚠️ LLaVA failed for PDF image {img_index + 1}: {llava_error}")
-                            finally:
-                                if os.path.exists(temp_path):
-                                    os.unlink(temp_path)
+                                # 2. Try LLaVA vision model (second fallback)
+                                try:
+                                    from services.ai_services.ai_agents.ollama_service import ollama_service
+                                    logging.info(f"🖼️ Extracting from PDF page {page_num + 1}, image {img_index + 1} using LLaVA (fallback)")
+                                    extracted_text = ollama_service.process_image(temp_path)
+                                    if extracted_text and len(extracted_text.strip()) > 0:
+                                        ai_content += f"\n--- Page {page_num + 1}, Image {img_index + 1} LLaVA Extracted ---\n"
+                                        ai_content += extracted_text
+                                        images_processed += 1
+                                        logging.info(f"✅ LLaVA extracted text from PDF image {img_index + 1}")
+                                        os.unlink(temp_path)
+                                        continue  # Success, skip to next image
+                                except Exception as llava_error:
+                                    logging.warning(f"⚠️ LLaVA failed for PDF image {img_index + 1}: {llava_error}")
+                                finally:
+                                    if os.path.exists(temp_path):
+                                        os.unlink(temp_path)
+                            else:
+                                logging.info(f"⚠️ Skipping BLIP and LLaVA for PDF image {img_index + 1} (no GPU)")
 
                             # 3. OCR as absolute last resort (only if both AI methods failed)
                             logging.warning(f"⚠️ Both BLIP and LLaVA failed for PDF image, using OCR as last resort")
@@ -306,52 +322,58 @@ class DocumentParser:
             image = Image.open(file_path)
             result = {'image_size': image.size, 'image_mode': image.mode}
 
-            # 1. Try BLIP first (fast local model for image captioning and text)
-            try:
-                from services.ai_services.vision_service import VisionService
-                vision_service = VisionService(use_low_res=True, max_image_size=512)
-                logging.info(f"🎨 Attempting BLIP for: {os.path.basename(file_path)} (priority)")
-                blip_result = vision_service.process_image(file_path, tasks=["caption", "scene"])
-                
-                # Extract text from BLIP caption and scene analysis
-                blip_text = ""
-                if blip_result.get("caption"):
-                    blip_text += blip_result["caption"] + " "
-                if blip_result.get("scene"):
-                    scene_info = blip_result["scene"]
-                    if isinstance(scene_info, dict):
-                        blip_text += " ".join([str(v) for v in scene_info.values() if v])
-                
-                if blip_text and len(blip_text.strip()) > 20:
-                    result.update({
-                        'text': blip_text.strip(),
-                        'word_count': len(blip_text.split()),
-                        'char_count': len(blip_text),
-                        'extraction_method': 'blip_vision',
-                        'metadata': blip_result
-                    })
-                    logging.info(f"✅ BLIP extracted {len(blip_text)} characters")
-                    return result
-                logging.warning("⚠️ BLIP returned insufficient content")
-            except Exception as e:
-                logging.warning(f"⚠️ BLIP failed: {str(e)}")
+            # 1. Try BLIP first (fast local model for image captioning and text) - only on GPU
+            if self.has_gpu:
+                try:
+                    from services.ai_services.vision_service import VisionService
+                    vision_service = VisionService(use_low_res=True, max_image_size=512)
+                    logging.info(f"🎨 Attempting BLIP for: {os.path.basename(file_path)} (priority)")
+                    blip_result = vision_service.process_image(file_path, tasks=["caption", "scene"])
+                    
+                    # Extract text from BLIP caption and scene analysis
+                    blip_text = ""
+                    if blip_result.get("caption"):
+                        blip_text += blip_result["caption"] + " "
+                    if blip_result.get("scene"):
+                        scene_info = blip_result["scene"]
+                        if isinstance(scene_info, dict):
+                            blip_text += " ".join([str(v) for v in scene_info.values() if v])
+                    
+                    if blip_text and len(blip_text.strip()) > 20:
+                        result.update({
+                            'text': blip_text.strip(),
+                            'word_count': len(blip_text.split()),
+                            'char_count': len(blip_text),
+                            'extraction_method': 'blip_vision',
+                            'metadata': blip_result
+                        })
+                        logging.info(f"✅ BLIP extracted {len(blip_text)} characters")
+                        return result
+                    logging.warning("⚠️ BLIP returned insufficient content")
+                except Exception as e:
+                    logging.warning(f"⚠️ BLIP failed: {str(e)}")
+            else:
+                logging.info(f"⚠️ Skipping BLIP for image {os.path.basename(file_path)} (no GPU)")
 
-            # 2. Try LLaVA vision model (second fallback - local AI with OCR capability)
-            try:
-                from services.ai_services.ai_agents.ollama_service import ollama_service
-                logging.info(f"🖼️ Attempting LLaVA for: {os.path.basename(file_path)} (fallback)")
-                llava_text = ollama_service.process_image(file_path)
-                if llava_text and len(llava_text.strip()) > 20:
-                    result.update({
-                        'text': llava_text,
-                        'word_count': len(llava_text.split()),
-                        'char_count': len(llava_text),
-                        'extraction_method': 'llava_vision'
-                    })
-                    logging.info(f"✅ LLaVA extracted {len(llava_text)} characters")
-                    return result
-            except Exception as e:
-                logging.warning(f"⚠️ LLaVA failed: {str(e)}")
+            # 2. Try LLaVA vision model (second fallback - local AI with OCR capability) - only on GPU
+            if self.has_gpu:
+                try:
+                    from services.ai_services.ai_agents.ollama_service import ollama_service
+                    logging.info(f"🖼️ Attempting LLaVA for: {os.path.basename(file_path)} (fallback)")
+                    llava_text = ollama_service.process_image(file_path)
+                    if llava_text and len(llava_text.strip()) > 20:
+                        result.update({
+                            'text': llava_text,
+                            'word_count': len(llava_text.split()),
+                            'char_count': len(llava_text),
+                            'extraction_method': 'llava_vision'
+                        })
+                        logging.info(f"✅ LLaVA extracted {len(llava_text)} characters")
+                        return result
+                except Exception as e:
+                    logging.warning(f"⚠️ LLaVA failed: {str(e)}")
+            else:
+                logging.info(f"⚠️ Skipping LLaVA for image {os.path.basename(file_path)} (no GPU)")
 
             # 3. OCR as absolute last resort (only if both AI methods failed)
             logging.warning(f"⚠️ Both BLIP and LLaVA failed for image, using OCR as last resort")
@@ -409,62 +431,66 @@ class DocumentParser:
         try:
             # Priority: BLIP (fast local) → LLaVA (local AI) → OCR (last resort) for images
             if ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp']:
-                # 1. Try BLIP first (fast local model)
-                try:
-                    from services.ai_services.vision_service import VisionService
-                    vision_service = VisionService(use_low_res=True, max_image_size=512)
-                    logging.info(f"🎨 Using BLIP for image: {os.path.basename(file_path)} (priority)")
-                    blip_result = vision_service.process_image(file_path, tasks=["caption", "scene"])
-                    
-                    blip_text = ""
-                    if blip_result.get("caption"):
-                        blip_text += blip_result["caption"] + " "
-                    if blip_result.get("scene"):
-                        scene_info = blip_result["scene"]
-                        if isinstance(scene_info, dict):
-                            blip_text += " ".join([str(v) for v in scene_info.values() if v])
-                    
-                    if blip_text and len(blip_text.strip()) > 20:
-                        result = {
-                            'text': blip_text.strip(),
-                            'word_count': len(blip_text.split()),
-                            'char_count': len(blip_text),
-                            'file_path': file_path,
-                            'file_name': os.path.basename(file_path),
-                            'file_size': os.path.getsize(file_path),
-                            'file_extension': ext,
-                            'processed_at': datetime.utcnow().isoformat(),
-                            'extraction_method': 'blip_vision',
-                            'metadata': blip_result
-                        }
-                        result.update(file_info)
-                        logging.info(f"✅ BLIP extracted {len(blip_text)} characters from image")
-                        return result
-                except Exception as e:
-                    logging.warning(f"⚠️ BLIP failed for image: {e}")
+                # Try AI models only on GPU
+                if self.has_gpu:
+                    # 1. Try BLIP first (fast local model)
+                    try:
+                        from services.ai_services.vision_service import VisionService
+                        vision_service = VisionService(use_low_res=True, max_image_size=512)
+                        logging.info(f"🎨 Using BLIP for image: {os.path.basename(file_path)} (priority)")
+                        blip_result = vision_service.process_image(file_path, tasks=["caption", "scene"])
+                        
+                        blip_text = ""
+                        if blip_result.get("caption"):
+                            blip_text += blip_result["caption"] + " "
+                        if blip_result.get("scene"):
+                            scene_info = blip_result["scene"]
+                            if isinstance(scene_info, dict):
+                                blip_text += " ".join([str(v) for v in scene_info.values() if v])
+                        
+                        if blip_text and len(blip_text.strip()) > 20:
+                            result = {
+                                'text': blip_text.strip(),
+                                'word_count': len(blip_text.split()),
+                                'char_count': len(blip_text),
+                                'file_path': file_path,
+                                'file_name': os.path.basename(file_path),
+                                'file_size': os.path.getsize(file_path),
+                                'file_extension': ext,
+                                'processed_at': datetime.utcnow().isoformat(),
+                                'extraction_method': 'blip_vision',
+                                'metadata': blip_result
+                            }
+                            result.update(file_info)
+                            logging.info(f"✅ BLIP extracted {len(blip_text)} characters from image")
+                            return result
+                    except Exception as e:
+                        logging.warning(f"⚠️ BLIP failed for image: {e}")
 
-                # 2. Try LLaVA if BLIP failed
-                try:
-                    from services.ai_services.ai_agents.ollama_service import ollama_service
-                    logging.info(f"🖼️ Using LLaVA for image: {os.path.basename(file_path)} (fallback)")
-                    llava_text = ollama_service.process_image(file_path)
-                    if llava_text and len(llava_text.strip()) > 0:
-                        result = {
-                            'text': llava_text,
-                            'word_count': len(llava_text.split()),
-                            'char_count': len(llava_text),
-                            'file_path': file_path,
-                            'file_name': os.path.basename(file_path),
-                            'file_size': os.path.getsize(file_path),
-                            'file_extension': ext,
-                            'processed_at': datetime.utcnow().isoformat(),
-                            'extraction_method': 'llava_vision'
-                        }
-                        result.update(file_info)
-                        logging.info(f"✅ LLaVA extracted {len(llava_text)} characters from image")
-                        return result
-                except Exception as e:
-                    logging.warning(f"⚠️ LLaVA failed for image: {e}")
+                    # 2. Try LLaVA if BLIP failed
+                    try:
+                        from services.ai_services.ai_agents.ollama_service import ollama_service
+                        logging.info(f"🖼️ Using LLaVA for image: {os.path.basename(file_path)} (fallback)")
+                        llava_text = ollama_service.process_image(file_path)
+                        if llava_text and len(llava_text.strip()) > 0:
+                            result = {
+                                'text': llava_text,
+                                'word_count': len(llava_text.split()),
+                                'char_count': len(llava_text),
+                                'file_path': file_path,
+                                'file_name': os.path.basename(file_path),
+                                'file_size': os.path.getsize(file_path),
+                                'file_extension': ext,
+                                'processed_at': datetime.utcnow().isoformat(),
+                                'extraction_method': 'llava_vision'
+                            }
+                            result.update(file_info)
+                            logging.info(f"✅ LLaVA extracted {len(llava_text)} characters from image")
+                            return result
+                    except Exception as e:
+                        logging.warning(f"⚠️ LLaVA failed for image: {e}")
+                else:
+                    logging.info(f"⚠️ Skipping BLIP and LLaVA for image {os.path.basename(file_path)} (no GPU)")
 
                 # 3. OCR as last resort
                 logging.warning("⚠️ Both BLIP and LLaVA failed for image, using OCR as last resort")

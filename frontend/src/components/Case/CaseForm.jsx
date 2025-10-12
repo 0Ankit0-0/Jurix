@@ -11,7 +11,7 @@ import { toast } from "react-hot-toast";
 import { caseAPI } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
-import CaseUploadBackground from "@/components/ui/CaseUploadBackground";
+import WaveGridBackground from "@/components/ui/WaveGridBackground";
 
 const CaseForm = () => {
   const navigate = useNavigate();
@@ -114,7 +114,7 @@ const CaseForm = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4">
-      <CaseUploadBackground />
+      <WaveGridBackground />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

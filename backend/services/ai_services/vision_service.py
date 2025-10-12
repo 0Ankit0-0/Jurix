@@ -21,12 +21,8 @@ except ImportError:
     EASYOCR_AVAILABLE = False
     logging.warning("⚠️ EasyOCR not available")
 
-try:
-    import pytesseract
-    TESSERACT_AVAILABLE = True
-except ImportError:
-    TESSERACT_AVAILABLE = False
-    logging.warning("⚠️ Pytesseract not available")
+# Tesseract removed as per user request
+TESSERACT_AVAILABLE = False
 
 try:
     from transformers import Blip2Processor, Blip2ForConditionalGeneration
@@ -42,13 +38,14 @@ class VisionService:
     Target: 20-30 seconds processing time for images
     """
     
-    def __init__(self, use_low_res=True, max_image_size=512):
+    def __init__(self, use_low_res=True, max_image_size=512, use_blip2=False):
         """
         Initialize Vision Service with performance optimizations
-        
+
         Args:
             use_low_res: Use lower resolution for faster processing (default: True)
             max_image_size: Maximum image dimension for processing (default: 512)
+            use_blip2: Enable BLIP-2 model for image captioning (default: False)
         """
         self.ocr_reader = None
         self.tesseract_available = self._check_tesseract()
@@ -57,8 +54,15 @@ class VisionService:
         self.device = None
         self.use_low_res = use_low_res
         self.max_image_size = max_image_size
-        
-        logging.info(f"🎨 VisionService initialized (low_res={use_low_res}, max_size={max_image_size})")
+        self.use_blip2 = use_blip2
+
+        # Set BLIP2_AVAILABLE based on use_blip2 and import success
+        if not use_blip2:
+            self.blip2_available = False
+        else:
+            self.blip2_available = BLIP2_AVAILABLE
+
+        logging.info(f"🎨 VisionService initialized (low_res={use_low_res}, max_size={max_image_size}, blip2={use_blip2})")
         
     def _check_tesseract(self) -> bool:
         """Check if Tesseract OCR is available"""
@@ -70,11 +74,12 @@ class VisionService:
             return False
             
     def _init_ocr(self):
-        """Initialize OCR engines lazily"""
+        """Initialize OCR engines lazily with GPU support if available"""
         if not self.ocr_reader:
             try:
-                self.ocr_reader = easyocr.Reader(['en'])
-                logging.info("✅ EasyOCR initialized")
+                gpu_available = torch.cuda.is_available()
+                self.ocr_reader = easyocr.Reader(['en'], gpu=gpu_available)
+                logging.info(f"✅ EasyOCR initialized with GPU: {gpu_available}")
             except Exception as e:
                 logging.error(f"❌ EasyOCR initialization failed: {e}")
                 
@@ -83,8 +88,8 @@ class VisionService:
         Initialize BLIP-2 model for image captioning
         Uses optimized settings for 20-30 second target
         """
-        if not BLIP2_AVAILABLE:
-            logging.warning("⚠️ BLIP-2 not available, skipping initialization")
+        if not self.blip2_available:
+            logging.warning("⚠️ BLIP-2 not enabled or not available, skipping initialization")
             return False
             
         if self.blip2_model is None:
@@ -118,6 +123,61 @@ class VisionService:
                 return False
         return True
 
+    def generate_caption(self, image_path: str, prompt: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Generate image caption using BLIP-2 model
+
+        Args:
+            image_path: Path to image file
+            prompt: Optional custom prompt for conditional captioning
+
+        Returns:
+            Dictionary with caption result, processing time, and metadata
+        """
+        result = {
+            "success": False,
+            "caption": None,
+            "processing_time": 0.0,
+            "model": "BLIP-2",
+            "error": None,
+            "metadata": {}
+        }
+
+        start_time = time.time()
+
+        try:
+            # Load and prepare image
+            image = Image.open(image_path)
+            if self.use_low_res:
+                image = self._resize_image(image)
+
+            # Initialize BLIP-2 if needed
+            if not self._init_blip2_model():
+                result["error"] = "BLIP-2 model not available"
+                return result
+
+            # Generate caption
+            caption = self._generate_caption_blip2(image, prompt)
+            if caption:
+                result["success"] = True
+                result["caption"] = caption
+                result["metadata"] = {
+                    "device": self.device,
+                    "model_name": "Salesforce/blip2-opt-2.7b",
+                    "image_size": image.size,
+                    "prompt_used": prompt is not None
+                }
+                logging.info(f"✅ Caption generated: {caption[:100]}...")
+            else:
+                result["error"] = "Caption generation returned None"
+
+        except Exception as e:
+            result["error"] = str(e)
+            logging.error(f"❌ Caption generation failed: {e}")
+
+        result["processing_time"] = time.time() - start_time
+        return result
+
     def process_image(self, image_path: str, tasks: List[str] = ["caption", "layout", "scene"]) -> Dict[str, Any]:
         """Process image with advanced AI models for scene understanding and layout analysis.
 
@@ -139,7 +199,7 @@ class VisionService:
 
             # Image Captioning with BLIP-2
             if "caption" in tasks:
-                if self._init_blip2_model():  # ✅ Initialize BLIP-2
+                if self.blip2_available and self._init_blip2_model():  # ✅ Initialize BLIP-2
                     try:
                         caption = self._generate_caption_blip2(image)
                         results["caption"] = caption
@@ -148,7 +208,7 @@ class VisionService:
                         logging.error(f"❌ Caption generation failed: {e}")
                         results["caption"] = None
                 else:
-                    logging.warning("⚠️ BLIP-2 not available for captioning")
+                    logging.warning("⚠️ BLIP-2 not enabled or not available for captioning")
                     results["caption"] = None
 
             # Layout Analysis
@@ -188,11 +248,14 @@ class VisionService:
 
         return image
 
-    def _generate_caption_blip2(self, image: Image.Image) -> str:
+    def _generate_caption_blip2(self, image: Image.Image, prompt: Optional[str] = None) -> str:
         """Generate image caption using BLIP-2 model"""
         try:
-            # Process image
-            inputs = self.blip2_processor(image, return_tensors="pt").to(self.device)
+            # Process image and optional text prompt
+            if prompt:
+                inputs = self.blip2_processor(image, text=prompt, return_tensors="pt").to(self.device)
+            else:
+                inputs = self.blip2_processor(image, return_tensors="pt").to(self.device)
 
             # Generate caption
             with torch.no_grad():
