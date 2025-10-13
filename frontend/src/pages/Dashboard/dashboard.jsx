@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { SkeletonDashboard } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDebounce } from "@/hooks/useDebounce";
+import { debounce } from "@/utils/performance";
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
 // import CaseUploadBackground from "@/components/ui/CaseUploadBackground";
 

@@ -1,13 +1,31 @@
-# TODO: Make Other Backgrounds Like Home & Dashboard
+# Frontend Performance Optimization Plan
 
-## Tasks
-- [x] Replace ParallaxBackground with WaveGridBackground in PublicCases.jsx
-- [x] Replace CaseUploadBackground with WaveGridBackground in CaseForm.jsx
-- [x] Replace SimulationBackground with WaveGridBackground in LiveSimulation.jsx
-- [x] Replace SimulationBackground with WaveGridBackground in ReplaySimulation.jsx
-- [x] Replace ReviewBackground with WaveGridBackground in ReviewScreen.jsx
-- [x] Replace ProcessingBackground with WaveGridBackground in ProcessingScreen.jsx
-- [ ] Replace CaseUploadBackground with WaveGridBackground in chatbot.jsx
+## Bundle Optimization
+- [x] Implement more granular code splitting for heavy components
+- [x] Add dynamic imports for non-critical features
+- [x] Optimize vendor chunks
 
-## Followup Steps
-- [ ] Test the changes to ensure backgrounds render correctly
+## Image and Asset Optimization
+- [x] Implement lazy loading for images
+- [x] Add image compression and WebP support
+- [x] Preload critical images
+
+## Caching and Loading Strategies
+- [x] Implement service worker for caching
+- [x] Add resource hints (preload, prefetch)
+- [x] Optimize font loading
+
+## React Performance
+- [x] Add memoization (React.memo, useMemo, useCallback)
+- [x] Implement virtual scrolling for long lists
+- [x] Optimize re-renders
+
+## Monitoring and Analytics
+- [x] Set up Core Web Vitals tracking
+- [x] Add performance budgets
+- [x] Implement error boundaries with performance monitoring
+
+## Network Optimization
+- [ ] Enable compression (gzip/brotli)
+- [ ] Implement proper caching headers
+- [ ] Add CDN for static assets

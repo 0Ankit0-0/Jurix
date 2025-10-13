@@ -12,10 +12,10 @@ export function useKeyboardShortcut(keys, callback, options = {}) {
       if (event.metaKey) pressedKeys.push('cmd')
       if (event.shiftKey) pressedKeys.push('shift')
       if (event.altKey) pressedKeys.push('alt')
-      
+
       pressedKeys.push(event.key.toLowerCase())
 
-      const shortcutPressed = keysArray.every(key => 
+      const shortcutPressed = keysArray.every(key =>
         pressedKeys.includes(key.toLowerCase())
       )
 

@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { chatbotAPI, caseAPI } from "../../services/api"
 import { toast } from "react-hot-toast"
 import { useAuth } from "@/context/AuthContext"
-import CaseUploadBackground from "@/components/ui/CaseUploadBackground"
+import WaveGridBackground from "@/components/ui/WaveGridBackground"
 
 const suggestedQuestions = [
     "What are the key elements of a contract?",
@@ -163,7 +163,7 @@ export default function ChatbotPage() {
 
     return (
         <div className="flex h-screen relative overflow-hidden">
-            <CaseUploadBackground />
+            <WaveGridBackground />
             {/*  Desktop Sidebar */}
             <div className="hidden md:flex w-72 bg-card/50 backdrop-blur-xl border-r border-border/50 flex-col shadow-xl">
                 <div className="p-4 border-b border-border/50">

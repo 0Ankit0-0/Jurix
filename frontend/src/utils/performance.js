@@ -1,202 +1,177 @@
-/**
- * Performance optimization utilities
- */
+import React from 'react';
 
 /**
- * Lazy load component with retry logic
- * @param {Function} importFunc - Dynamic import function
- * @param {number} retries - Number of retries
- * @returns {Promise} Lazy loaded component
+ * Lazy loading with retry logic for better error handling
+ * @param {Function} importFn - Dynamic import function
+ * @param {number} retries - Number of retry attempts
+ * @returns {Component} Lazy loaded component with retry
  */
-export const lazyWithRetry = (importFunc, retries = 3) => {
-  return new Promise((resolve, reject) => {
-    const attemptImport = (retriesLeft) => {
-      importFunc()
-        .then(resolve)
-        .catch((error) => {
-          if (retriesLeft === 0) {
-            reject(error);
-            return;
-          }
-          
-          console.log(`Retrying import... (${retriesLeft} attempts left)`);
-          setTimeout(() => attemptImport(retriesLeft - 1), 1000);
-        });
+export const lazyWithRetry = (importFn, retries = 3) => {
+  const loadComponent = () => {
+    let promise = importFn();
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      promise = promise.catch(error => {
+        console.warn(`Lazy load attempt ${attempt} failed, retrying...`, error);
+        return new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000)).then(() => importFn());
+      });
+    }
+    return promise;
+  };
+
+  return React.lazy(loadComponent);
+};
+
+/**
+ * Preload critical resources
+ * @param {Array} resources - Array of resources to preload
+ */
+export const preloadResources = (resources) => {
+  resources.forEach(resource => {
+    if (resource.type === 'script') {
+      const script = document.createElement('script');
+      script.src = resource.url;
+      script.async = true;
+      document.head.appendChild(script);
+    } else if (resource.type === 'style') {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'style';
+      link.href = resource.url;
+      document.head.appendChild(link);
+    } else if (resource.type === 'image') {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = resource.url;
+      document.head.appendChild(link);
+    }
+  });
+};
+
+/**
+ * Lazy load images with intersection observer
+ * @param {string} selector - CSS selector for images
+ * @param {Object} options - Observer options
+ */
+export const lazyLoadImage = (selector, options = {}) => {
+  const images = document.querySelectorAll(selector);
+  const observerOptions = {
+    root: null,
+    rootMargin: '0px 0px 100px 0px',
+    threshold: 0.1,
+    ...options
+  };
+
+  const observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        img.src = img.dataset.src;
+        img.classList.remove('lazy');
+        img.onload = () => img.classList.add('loaded');
+        observer.unobserve(img);
+      }
+    });
+  }, observerOptions);
+
+  images.forEach(img => observer.observe(img));
+};
+
+/**
+ * Debounce function for performance optimization
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Wait time in ms
+ * @returns {Function} Debounced function
+ */
+export const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
     };
-    
-    attemptImport(retries);
-  });
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
 };
 
 /**
- * Preload image
- * @param {string} src - Image source URL
- * @returns {Promise} Promise that resolves when image is loaded
+ * Throttle function for performance optimization
+ * @param {Function} func - Function to throttle
+ * @param {number} limit - Throttle limit in ms
+ * @returns {Function} Throttled function
  */
-export const preloadImage = (src) => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
+export const throttle = (func, limit) => {
+  let inThrottle;
+  return function executedFunction(...args) {
+    const context = this;
+    if (!inThrottle) {
+      func.apply(context, args);
+      inThrottle = true;
+      setTimeout(() => inThrottle = false, limit);
+    }
+  };
 };
 
 /**
- * Preload multiple images
- * @param {Array} srcs - Array of image source URLs
- * @returns {Promise} Promise that resolves when all images are loaded
+ * Memoize expensive computations
+ * @param {Function} fn - Function to memoize
+ * @returns {Function} Memoized function
  */
-export const preloadImages = (srcs) => {
-  return Promise.all(srcs.map(preloadImage));
+export const memoize = (fn) => {
+  const cache = new Map();
+  return (...args) => {
+    const key = JSON.stringify(args);
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    const result = fn(...args);
+    cache.set(key, result);
+    return result;
+  };
 };
 
 /**
  * Check if element is in viewport
- * @param {HTMLElement} element - Element to check
- * @param {number} offset - Offset in pixels
+ * @param {Element} element - DOM element
  * @returns {boolean} True if in viewport
  */
-export const isInViewport = (element, offset = 0) => {
-  if (!element) return false;
-  
+export const isInViewport = (element) => {
   const rect = element.getBoundingClientRect();
   return (
-    rect.top >= -offset &&
-    rect.left >= -offset &&
-    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) + offset &&
-    rect.right <= (window.innerWidth || document.documentElement.clientWidth) + offset
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
   );
 };
 
 /**
- * Measure component render time
- * @param {string} componentName - Name of component
- * @param {Function} callback - Callback to execute
+ * Optimize window resize events
+ * @param {Function} callback - Callback function
+ * @param {number} delay - Debounce delay
  */
-export const measureRenderTime = (componentName, callback) => {
-  const start = performance.now();
-  callback();
-  const end = performance.now();
-  console.log(`${componentName} render time: ${(end - start).toFixed(2)}ms`);
-};
+export const optimizeResize = (callback, delay = 100) => {
+  let ticking = false;
+  const debouncedCallback = debounce(callback, delay);
 
-/**
- * Get page load metrics
- * @returns {Object} Page load metrics
- */
-export const getPageLoadMetrics = () => {
-  if (!window.performance || !window.performance.timing) {
-    return null;
-  }
-  
-  const timing = window.performance.timing;
-  const navigation = window.performance.navigation;
-  
-  return {
-    // Page load time
-    pageLoadTime: timing.loadEventEnd - timing.navigationStart,
-    
-    // Domain lookup time
-    domainLookupTime: timing.domainLookupEnd - timing.domainLookupStart,
-    
-    // TCP connection time
-    tcpConnectTime: timing.connectEnd - timing.connectStart,
-    
-    // Request time
-    requestTime: timing.responseEnd - timing.requestStart,
-    
-    // Response time
-    responseTime: timing.responseEnd - timing.responseStart,
-    
-    // DOM processing time
-    domProcessingTime: timing.domComplete - timing.domLoading,
-    
-    // DOM content loaded time
-    domContentLoadedTime: timing.domContentLoadedEventEnd - timing.navigationStart,
-    
-    // Navigation type
-    navigationType: navigation.type,
-    
-    // Redirect count
-    redirectCount: navigation.redirectCount,
+  const update = () => {
+    debouncedCallback();
+    ticking = false;
   };
-};
 
-/**
- * Log performance metrics to console
- */
-export const logPerformanceMetrics = () => {
-  const metrics = getPageLoadMetrics();
-  if (metrics) {
-    console.group('📊 Performance Metrics');
-    console.log(`Page Load Time: ${metrics.pageLoadTime}ms`);
-    console.log(`Domain Lookup: ${metrics.domainLookupTime}ms`);
-    console.log(`TCP Connect: ${metrics.tcpConnectTime}ms`);
-    console.log(`Request Time: ${metrics.requestTime}ms`);
-    console.log(`Response Time: ${metrics.responseTime}ms`);
-    console.log(`DOM Processing: ${metrics.domProcessingTime}ms`);
-    console.log(`DOM Content Loaded: ${metrics.domContentLoadedTime}ms`);
-    console.groupEnd();
-  }
-};
-
-/**
- * Optimize image loading with IntersectionObserver
- * @param {HTMLElement} img - Image element
- * @param {string} src - Image source
- * @param {Object} options - IntersectionObserver options
- */
-export const lazyLoadImage = (img, src, options = {}) => {
-  const defaultOptions = {
-    root: null,
-    rootMargin: '50px',
-    threshold: 0.01,
-    ...options,
+  const requestTick = () => {
+    if (!ticking) {
+      requestAnimationFrame(update);
+      ticking = true;
+    }
   };
-  
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        const image = entry.target;
-        image.src = src;
-        observer.unobserve(image);
-      }
-    });
-  }, defaultOptions);
-  
-  observer.observe(img);
-  
-  return () => observer.disconnect();
-};
 
-/**
- * Request idle callback wrapper
- * @param {Function} callback - Callback to execute
- * @param {Object} options - Options
- */
-export const requestIdleCallback = (callback, options = {}) => {
-  if ('requestIdleCallback' in window) {
-    return window.requestIdleCallback(callback, options);
-  }
-  
-  // Fallback for browsers that don't support requestIdleCallback
-  return setTimeout(() => {
-    callback({
-      didTimeout: false,
-      timeRemaining: () => 50,
-    });
-  }, 1);
-};
+  window.addEventListener('resize', requestTick);
+  window.addEventListener('orientationchange', requestTick);
 
-/**
- * Cancel idle callback wrapper
- * @param {number} id - Callback ID
- */
-export const cancelIdleCallback = (id) => {
-  if ('cancelIdleCallback' in window) {
-    window.cancelIdleCallback(id);
-  } else {
-    clearTimeout(id);
-  }
+  return () => {
+    window.removeEventListener('resize', requestTick);
+    window.removeEventListener('orientationchange', requestTick);
+  };
 };

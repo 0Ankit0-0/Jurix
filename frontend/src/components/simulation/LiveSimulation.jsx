@@ -1,6 +1,6 @@
 // Enhanced LiveSimulation.jsx with Case Details Header
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import ChatQuestionInput from "./ChatQuestionInput";
 import WaveGridBackground from "@/components/ui/WaveGridBackground";
 import TypingIndicator from "./TypingIndicator";
 import FormattedTranscript from "./FormattedTranscript";
+import VirtualList from "@/components/ui/virtual-list";
 
 const LiveSimulation = () => {
   const navigate = useNavigate();
@@ -133,7 +134,7 @@ const LiveSimulation = () => {
     };
   }, [caseId, navigate]);
 
-  const handleDownloadReport = async () => {
+  const handleDownloadReport = useCallback(async () => {
     try {
       const response = await simulationAPI.getReport(caseId);
       const blob = new Blob([response.data], { type: "application/pdf" });
@@ -150,19 +151,19 @@ const LiveSimulation = () => {
       console.error("Error downloading report:", error);
       toast.error("Failed to download report");
     }
-  };
+  }, [caseId]);
 
-  const handlePlayPause = () => setIsPlaying(!isPlaying);
-  const handleReset = () => {
+  const handlePlayPause = useCallback(() => setIsPlaying(!isPlaying), [isPlaying]);
+  const handleReset = useCallback(() => {
     setCurrentTurn(0);
     setIsPlaying(true);
-  };
-  const handleSpeedChange = () => {
+  }, []);
+  const handleSpeedChange = useCallback(() => {
     const speeds = [0.5, 1, 1.5, 2];
     const currentIndex = speeds.indexOf(playbackSpeed);
     const nextIndex = (currentIndex + 1) % speeds.length;
     setPlaybackSpeed(speeds[nextIndex]);
-  };
+  }, [playbackSpeed]);
 
   useEffect(() => {
     let interval;
@@ -389,74 +390,151 @@ const LiveSimulation = () => {
           {(isSimulating || (isTyping && currentTurn < turns.length - 1)) && (
             <TypingIndicator role={typingRole} thinkingText={thinkingText} />
           )}
-          
-          {turns.slice(0, isSimulating ? turns.length : currentTurn + 1).map((turn, index) => (
-            <motion.div
-              key={`${turn.turn_number}-${index}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Card className={`border-2 ${
-                isSimulating && index === turns.length - 1 
-                  ? 'border-primary shadow-lg ring-2 ring-primary/20' 
-                  : !isSimulating && index === currentTurn 
-                  ? 'border-primary shadow-lg' 
-                  : 'border-border'
-              }`}>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Badge variant={turn.role === 'Judge' ? 'default' : turn.role === 'Prosecutor' ? 'destructive' : 'secondary'}>
-                        {turn.role}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">Turn {turn.turn_number + 1}</span>
-                      {isSimulating && index === turns.length - 1 && (
-                        <Badge variant="outline" className="ml-2 animate-pulse">
-                          Live
-                        </Badge>
+
+          {turns.length > 20 ? (
+            // Use VirtualList for large lists
+            <VirtualList
+              items={turns.slice(0, isSimulating ? turns.length : currentTurn + 1)}
+              itemHeight={200} // Approximate height per turn
+              containerHeight={600}
+              renderItem={(turn, index) => (
+                <motion.div
+                  key={`${turn.turn_number}-${index}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Card className={`border-2 ${
+                    isSimulating && index === turns.length - 1
+                      ? 'border-primary shadow-lg ring-2 ring-primary/20'
+                      : !isSimulating && index === currentTurn
+                      ? 'border-primary shadow-lg'
+                      : 'border-border'
+                  }`}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Badge variant={turn.role === 'Judge' ? 'default' : turn.role === 'Prosecutor' ? 'destructive' : 'secondary'}>
+                            {turn.role}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">Turn {turn.turn_number + 1}</span>
+                          {isSimulating && index === turns.length - 1 && (
+                            <Badge variant="outline" className="ml-2 animate-pulse">
+                              Live
+                            </Badge>
+                          )}
+                        </CardTitle>
+                        <span className="text-sm text-muted-foreground">{turn.timestamp}</span>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {turn.thinking_process && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-300 to-transparent dark:via-blue-700"></div>
+                            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                              </svg>
+                              Thinking Process
+                            </span>
+                            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-300 to-transparent dark:via-blue-700"></div>
+                          </div>
+                          <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-l-4 border-blue-500 rounded-r-lg shadow-sm">
+                            <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed italic">
+                              "{turn.thinking_process}"
+                            </p>
+                          </div>
+                        </div>
                       )}
-                    </CardTitle>
-                    <span className="text-sm text-muted-foreground">{turn.timestamp}</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {turn.thinking_process && (
+
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-700"></div>
+                          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                            Statement
+                          </span>
+                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-700"></div>
+                        </div>
+                        <div className="p-4 bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
+                          <p className="text-foreground leading-relaxed">{turn.message}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
+            />
+          ) : (
+            // Regular rendering for smaller lists
+            turns.slice(0, isSimulating ? turns.length : currentTurn + 1).map((turn, index) => (
+              <motion.div
+                key={`${turn.turn_number}-${index}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Card className={`border-2 ${
+                  isSimulating && index === turns.length - 1
+                    ? 'border-primary shadow-lg ring-2 ring-primary/20'
+                    : !isSimulating && index === currentTurn
+                    ? 'border-primary shadow-lg'
+                    : 'border-border'
+                }`}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Badge variant={turn.role === 'Judge' ? 'default' : turn.role === 'Prosecutor' ? 'destructive' : 'secondary'}>
+                          {turn.role}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">Turn {turn.turn_number + 1}</span>
+                        {isSimulating && index === turns.length - 1 && (
+                          <Badge variant="outline" className="ml-2 animate-pulse">
+                            Live
+                          </Badge>
+                        )}
+                      </CardTitle>
+                      <span className="text-sm text-muted-foreground">{turn.timestamp}</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {turn.thinking_process && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-300 to-transparent dark:via-blue-700"></div>
+                          <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            </svg>
+                            Thinking Process
+                          </span>
+                          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-300 to-transparent dark:via-blue-700"></div>
+                        </div>
+                        <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-l-4 border-blue-500 rounded-r-lg shadow-sm">
+                          <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed italic">
+                            "{turn.thinking_process}"
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-300 to-transparent dark:via-blue-700"></div>
-                        <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                          </svg>
-                          Thinking Process
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-700"></div>
+                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                          Statement
                         </span>
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-blue-300 to-transparent dark:via-blue-700"></div>
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-700"></div>
                       </div>
-                      <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-l-4 border-blue-500 rounded-r-lg shadow-sm">
-                        <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed italic">
-                          "{turn.thinking_process}"
-                        </p>
+                      <div className="p-4 bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
+                        <p className="text-foreground leading-relaxed">{turn.message}</p>
                       </div>
                     </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-700"></div>
-                      <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
-                        Statement
-                      </span>
-                      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-700"></div>
-                    </div>
-                    <div className="p-4 bg-white dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
-                      <p className="text-foreground leading-relaxed">{turn.message}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))
+          )}
         </div>
 
         {/* Full Transcript */}

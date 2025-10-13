@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, FileText, Calendar, User } from "lucide-react"
 import { toast } from "react-hot-toast"
-import CaseUploadBackground from "@/components/ui/CaseUploadBackground"
+import WaveGridBackground from "@/components/ui/WaveGridBackground"
 
 export default function CaseDiscussions() {
   const { caseId } = useParams()
@@ -34,7 +34,7 @@ export default function CaseDiscussions() {
   if (isLoading) {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
-        <CaseUploadBackground />
+        <WaveGridBackground />
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading case...</p>
@@ -46,7 +46,7 @@ export default function CaseDiscussions() {
   if (!caseData) {
     return (
       <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
-        <CaseUploadBackground />
+        <WaveGridBackground />
         <div className="text-center">
           <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-2">Case Not Found</h2>

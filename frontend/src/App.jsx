@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { Toaster } from 'react-hot-toast';
@@ -9,20 +9,24 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import PageTransition from "./components/ui/page-transition";
 import ProcessingScreen from "./components/simulation/ProcessingScreen";
 import WaveGridBackground from "./components/ui/WaveGridBackground";
+import { monitorWebVitals, logPageView } from "./utils/monitoring";
+import { registerServiceWorker } from "./utils/serviceWorker";
 
-// Lazy load components for better performance
-const Dashboard = React.lazy(() => import("./pages/Dashboard/dashboard"));
-const Home = React.lazy(() => import("./pages/home/home"));
-const CreateCase = React.lazy(() => import("./components/Case/CaseForm"));
-const ChatbotPage = React.lazy(() => import("./components/chatbot/chatbot"));
-const ReplaySimulation = React.lazy(() => import("./components/simulation/ReplaySimulation"));
-const LiveSimulation = React.lazy(() => import("./components/simulation/LiveSimulation"));
-const ReviewScreen = React.lazy(() => import("./components/simulation/ReviewScreen"));
-const ProfilePage = React.lazy(() => import("./components/homepageComponents/profile"));
-const LoginPage = React.lazy(() => import("./pages/forms/login"));
-const SignupPage = React.lazy(() => import("./pages/forms/signUp"));
-const PublicCases = React.lazy(() => import("./pages/PublicCases/PublicCases"));
-const CaseDiscussions = React.lazy(() => import("./pages/CaseDiscussions/CaseDiscussions"));
+// Lazy load components for better performance with retry logic
+import { lazyWithRetry } from "./utils/performance";
+
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard/dashboard"));
+const Home = lazyWithRetry(() => import("./pages/home/home"));
+const CreateCase = lazyWithRetry(() => import("./components/Case/CaseForm"));
+const ChatbotPage = lazyWithRetry(() => import("./components/chatbot/chatbot"));
+const ReplaySimulation = lazyWithRetry(() => import("./components/simulation/ReplaySimulation"));
+const LiveSimulation = lazyWithRetry(() => import("./components/simulation/LiveSimulation"));
+const ReviewScreen = lazyWithRetry(() => import("./components/simulation/ReviewScreen"));
+const ProfilePage = lazyWithRetry(() => import("./components/homepageComponents/profile"));
+const LoginPage = lazyWithRetry(() => import("./pages/forms/login"));
+const SignupPage = lazyWithRetry(() => import("./pages/forms/signUp"));
+const PublicCases = lazyWithRetry(() => import("./pages/PublicCases/PublicCases"));
+const CaseDiscussions = lazyWithRetry(() => import("./pages/CaseDiscussions/CaseDiscussions"));
 
 // Loading fallback component with animation
 const PageLoader = () => (
@@ -39,6 +43,11 @@ function AnimatedRoutes() {
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem("user_data") || "null");
   const name = user ? user.name : "Guest";
+
+  // Track page views for analytics
+  useEffect(() => {
+    logPageView(location.pathname);
+  }, [location.pathname]);
 
   return (
     <AnimatePresence mode="wait">
@@ -226,6 +235,12 @@ function AnimatedRoutes() {
 }
 
 function App() {
+  // Initialize performance monitoring and service worker
+  useEffect(() => {
+    monitorWebVitals();
+    registerServiceWorker();
+  }, []);
+
   return (
     <ErrorBoundary fallbackMessage="Something went wrong with the application. Please refresh the page.">
       <Router>
