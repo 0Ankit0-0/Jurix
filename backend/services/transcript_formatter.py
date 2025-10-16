@@ -265,7 +265,10 @@ class TranscriptFormatter:
 
         for marker, emoji in section_patterns:
             pattern = re.compile(f'(?i)({re.escape(marker)})')
-            replacement = f'\n---\n{emoji} \\1' if emoji else '\n---\n\\1'
+            if marker == SectionMarkers.FINAL_JUDGMENT:
+                 replacement = f'\n\n********************\n{emoji} \\1\n********************\n' if emoji else '\n\n********************\n\\1\n********************\n'
+            else:
+                replacement = f'\n---\n{emoji} \\1' if emoji else '\n---\n\\1'
             text = pattern.sub(replacement, text)
 
         return text.strip()
@@ -353,7 +356,9 @@ OUTPUT FORMAT:
 
 ---
 
+********************
 === Verdict Summary ===
+********************
 - Verdict: [Guilty/Not Guilty/etc.]
 - Reasoning: [Brief summary of key reasoning points]
 """

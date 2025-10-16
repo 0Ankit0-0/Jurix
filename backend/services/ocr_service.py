@@ -24,11 +24,12 @@ class EvidenceOCRService:
     Service for OCR processing of evidence images with GPU support
     """
 
-    def __init__(self):
+    def __init__(self, socketio=None):
         self.ocr_reader = None
         self.gpu_available = torch.cuda.is_available()
         self.evidence_dir = os.path.join(os.path.dirname(__file__), '..', 'uploaded_evidence')
         self.supported_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'}
+        self.socketio = socketio
 
         logging.info(f"🎯 EvidenceOCRService initialized (GPU: {self.gpu_available})")
 
@@ -102,10 +103,14 @@ class EvidenceOCRService:
         """Process all evidence images with OCR"""
         image_files = self.get_evidence_images()
         results = []
+        total_files = len(image_files)
 
-        for image_path in image_files:
+        for i, image_path in enumerate(image_files):
             result = self.process_image_ocr(image_path)
             results.append(result)
+            if self.socketio:
+                progress = (i + 1) / total_files * 100
+                self.socketio.emit('evidence_progress', {'progress': progress})
 
         logging.info(f"🎯 Processed {len(results)} evidence images with OCR")
         return results
@@ -120,9 +125,9 @@ class EvidenceOCRService:
 
 
 # Standalone functions for easy use
-def ocr_evidence_images() -> List[Dict[str, Any]]:
+def ocr_evidence_images(socketio=None) -> List[Dict[str, Any]]:
     """Convenience function to OCR all evidence images"""
-    service = EvidenceOCRService()
+    service = EvidenceOCRService(socketio)
     return service.process_all_evidence_images()
 
 def ocr_single_evidence(filename: str) -> Dict[str, Any]:

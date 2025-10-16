@@ -73,28 +73,38 @@ def upload_file():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 
-    file = request.files['file']
+    files = request.files.getlist('file')
+    uploaded_files = []
 
-    # Validate file
-    is_valid, message = validate_file(file, ALLOWED_EVIDENCE_EXTENSIONS)
-    if not is_valid:
-        return jsonify({'error': message}), 400
+    for file in files:
+        # Validate file
+        is_valid, message = validate_file(file, ALLOWED_EVIDENCE_EXTENSIONS)
+        if not is_valid:
+            # You might want to decide how to handle this - skip file or fail all
+            # For now, we'll just skip the invalid file
+            print(f"Skipping invalid file {file.filename}: {message}")
+            continue
 
-    # Generate unique filename
-    original_filename = secure_filename(file.filename)
-    ext = original_filename.rsplit('.', 1)[1].lower()
-    unique_filename = f"{uuid.uuid4().hex[:8]}_{original_filename}"
-    file_path = os.path.join(EVIDENCE_DIR, unique_filename)
+        # Generate unique filename
+        original_filename = secure_filename(file.filename)
+        ext = original_filename.rsplit('.', 1)[1].lower()
+        unique_filename = f"{uuid.uuid4().hex[:8]}_{original_filename}"
+        file_path = os.path.join(EVIDENCE_DIR, unique_filename)
 
-    # Save file
-    file.save(file_path)
+        # Save file
+        file.save(file_path)
 
-    return jsonify({
-        'message': 'File uploaded successfully',
-        'filename': unique_filename,
-        'original_filename': original_filename,
-        'url': f"/uploads/evidence/{unique_filename}"
-    }), 200
+        uploaded_files.append({
+            'message': 'File uploaded successfully',
+            'filename': unique_filename,
+            'original_filename': original_filename,
+            'url': f"/uploads/evidence/{unique_filename}"
+        })
+
+    if not uploaded_files:
+        return jsonify({'error': 'No valid files were uploaded'}), 400
+
+    return jsonify(uploaded_files), 200
 
 
 # ---------------- Avatar Upload ---------------- #

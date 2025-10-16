@@ -234,12 +234,12 @@ def generate_simulation_report(case_data, simulation_results, output_path):
     elements.append(Spacer(1, 10))
     
     metadata = [
-        ['<b>Case ID:</b>', simulation_results.get('simulation_id', 'N/A')],
-        ['<b>Case Title:</b>', case_data.get('title', 'Untitled')],
-        ['<b>Case Type:</b>', case_data.get('case_type', 'N/A')],
-        ['<b>Submitted By:</b>', case_data.get('user_id', 'N/A')],
-        ['<b>Date of Simulation:</b>', datetime.now().strftime('%d/%m/%Y')],
-        ['<b>Evidence Count:</b>', str(len(case_data.get('evidence_files', [])))]
+        ['Case ID:', simulation_results.get('simulation_id', 'N/A')],
+        ['Case Title:', case_data.get('title', 'Untitled')],
+        ['Case Type:', case_data.get('case_type', 'N/A')],
+        ['Submitted By:', case_data.get('user_id', 'N/A')],
+        ['Date of Simulation:', datetime.now().strftime('%d/%m/%Y')],
+        ['Evidence Count:', str(len(case_data.get('evidence_files', [])))]
     ]
     
     metadata_table = Table(metadata, colWidths=[1.5*inch, 5*inch])
@@ -263,10 +263,10 @@ def generate_simulation_report(case_data, simulation_results, output_path):
     
     # Case details
     case_details = [
-        ['<b>Case Type:</b>', case_data.get('case_type', 'N/A')],
-        ['<b>Plaintiff:</b>', case_data.get('parties', {}).get('plaintiff', 'N/A')],
-        ['<b>Defendant:</b>', case_data.get('parties', {}).get('defendant', 'N/A')],
-        ['<b>Judge:</b>', case_data.get('parties', {}).get('judge', 'AI Judge')]
+        ['Case Type:', case_data.get('case_type', 'N/A')],
+        ['Plaintiff:', case_data.get('parties', {}).get('plaintiff', 'N/A')],
+        ['Defendant:', case_data.get('parties', {}).get('defendant', 'N/A')],
+        ['Judge:', case_data.get('parties', {}).get('judge', 'AI Judge')]
     ]
     
     details_table = Table(case_details, colWidths=[1.5*inch, 5*inch])

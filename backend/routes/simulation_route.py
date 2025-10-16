@@ -129,7 +129,7 @@ def analyze_case_evidence(case_id: str) -> Union[str, List[Dict[str, Any]]]:
             }, room=case_id)
 
             # master_parser might return long string or dict; keep a safe slice
-            parsed = master_parser(file_path, use_multimodal_pdf=True)
+            parsed = master_parser(file_path, use_multimodal_pdf=True, socketio=socketio, case_id=case_id)
             # Normalize parsed content into string
             if isinstance(parsed, dict):
                 content_text = parsed.get("text") or parsed.get("content") or str(parsed)

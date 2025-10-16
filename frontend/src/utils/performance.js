@@ -83,7 +83,7 @@ export const lazyLoadImage = (selector, options = {}) => {
  * @param {number} wait - Wait time in ms
  * @returns {Function} Debounced function
  */
-export const debounce = (func, wait) => {
+const debounce = (func, wait) => {
   let timeout;
   return function executedFunction(...args) {
     const later = () => {
@@ -94,6 +94,8 @@ export const debounce = (func, wait) => {
     timeout = setTimeout(later, wait);
   };
 };
+
+export default debounce;
 
 /**
  * Throttle function for performance optimization

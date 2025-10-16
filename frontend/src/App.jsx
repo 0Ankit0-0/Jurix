@@ -27,6 +27,7 @@ const LoginPage = lazyWithRetry(() => import("./pages/forms/login"));
 const SignupPage = lazyWithRetry(() => import("./pages/forms/signUp"));
 const PublicCases = lazyWithRetry(() => import("./pages/PublicCases/PublicCases"));
 const CaseDiscussions = lazyWithRetry(() => import("./pages/CaseDiscussions/CaseDiscussions"));
+const EvidenceReview = lazyWithRetry(() => import("./pages/EvidenceReview/EvidenceReview"));
 
 // Loading fallback component with animation
 const PageLoader = () => (
@@ -208,6 +209,19 @@ function AnimatedRoutes() {
               <ErrorBoundary fallbackMessage="Failed to load simulation replay">
                 <PageTransition>
                   <ReplaySimulation />
+                </PageTransition>
+              </ErrorBoundary>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/case/:caseId/evidence-review"
+          element={
+            <ProtectedRoute>
+              <ErrorBoundary fallbackMessage="Failed to load evidence review">
+                <PageTransition>
+                  <EvidenceReview />
                 </PageTransition>
               </ErrorBoundary>
             </ProtectedRoute>

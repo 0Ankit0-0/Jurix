@@ -1,13 +1,15 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import logo from '../assets/H.png'; 
 
 export const exportReportToPDF = (caseData, report) => {
   const doc = new jsPDF();
   
   // Header
+  doc.addImage(logo, 'PNG', 15, 10, 20, 20);
   doc.setFontSize(20);
   doc.setTextColor(40, 40, 40);
-  doc.text('⚖️ Jurix Courtroom Simulation Report', 20, 20);
+  doc.text('Jurix', 40, 25);
   
   // Case Info
   doc.setFontSize(12);

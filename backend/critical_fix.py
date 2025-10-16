@@ -215,7 +215,7 @@ def setup_indexes():
     discussions.create_index([("user_id", 1)])
     print("✅ Discussion indexes created")
     
-    print("\\n🎉 All indexes created successfully!")
+    print("\n🎉 All indexes created successfully!")
 
 if __name__ == "__main__":
     setup_indexes()
@@ -427,9 +427,4 @@ def main():
     print("5. 🚀 Deploy to production\n")
 
 if __name__ == "__main__":
-    main() Fix #1: Document Parser CPU Optimization
-- **Issue**: BLIP-2 model loading on CPU (300+ seconds)
-- **Fix**: Disabled heavy models on CPU, use fast OCR
-- **Impact**: 100x faster evidence processing
-
-### ✅
+    main()

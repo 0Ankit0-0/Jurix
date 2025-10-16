@@ -34,11 +34,13 @@ logging.basicConfig(
 )
 
 class DocumentParser:
-    def __init__(self):
+    def __init__(self, socketio=None, case_id=None):
         """Initialize the document parser with AI and OCR support"""
         # Lazy load OCR reader - only initialize when needed
         self.ocr_reader = None
         self._ocr_initialized = False
+        self.socketio = socketio
+        self.case_id = case_id
 
         # Check GPU availability
         try:
@@ -204,6 +206,10 @@ class DocumentParser:
                 if page_text.strip():
                     text_content += f"\n--- Page {page_num + 1} Text ---\n"
                     text_content += page_text
+
+                if self.socketio and self.case_id:
+                    progress = (page_num + 1) / total_pages * 100
+                    self.socketio.emit('evidence_progress', {'progress': progress, 'file': os.path.basename(file_path), 'page': page_num + 1, 'total_pages': total_pages}, room=self.case_id)
 
                 # Extract images and apply AI extraction if enabled
                 if use_ai_extraction:
@@ -606,7 +612,7 @@ class DocumentParser:
             return None
 
 # Master parser function (compatible with existing code)
-def master_parser(file_path, use_multimodal_pdf=True, use_cache=True):
+def master_parser(file_path, use_multimodal_pdf=True, use_cache=True, socketio=None, case_id=None):
     """
     Master function to parse different file types.
 
@@ -614,11 +620,13 @@ def master_parser(file_path, use_multimodal_pdf=True, use_cache=True):
         file_path (str): Path to the file to parse
         use_multimodal_pdf (bool): Whether to use AI extraction for PDF images
         use_cache (bool): Whether to use cached results
+        socketio: The socketio instance for progress updates
+        case_id: The ID of the case for progress updates
 
     Returns:
         dict: Parsed content with metadata
     """
-    parser = DocumentParser()
+    parser = DocumentParser(socketio=socketio, case_id=case_id)
     # Check cache first
     if use_cache:
         cached_result = parser.get_cached_result(file_path)

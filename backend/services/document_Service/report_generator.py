@@ -324,8 +324,8 @@ class EnhancedReportGenerator:
             'case_details': {
                 'charges_sections': case_data.get('charges', 'Not specified'),
                 'parties_involved': {
-                    'prosecution': case_data.get('parties', {}).get('plaintiff', 'State Prosecutor'),
-                    'defense': case_data.get('parties', {}).get('defendant', 'Defense Attorney'),
+                    'prosecution': case_data.get('parties', {}).get('plaintiff', 'AI Prosecutor'),
+                    'defense': case_data.get('parties', {}).get('defendant', 'AI Defendant'),
                     'judge': case_data.get('parties', {}).get('judge', 'AI Judge')
                 },
                 'case_summary': case_data.get('description', 'No description provided'),
@@ -510,7 +510,7 @@ class EnhancedReportGenerator:
         # Header
         lines.extend([
             "=" * 80,
-            "⚖️  JURIX COURTROOM SIMULATION REPORT  ⚖️",
+            f"⚖️  {self.report_template['header']['title']}",
             "=" * 80,
             "",
             f"**Case ID:** {report['header']['case_id']}",
@@ -651,6 +651,8 @@ class EnhancedReportGenerator:
     
     def export_as_html(self, report: Dict) -> str:
         """Export report as HTML with styling"""
+        logo_html = self._get_logo_html(self.report_template['header']['logo'])
+
         html = f"""
         <!DOCTYPE html>
         <html lang="en">
@@ -679,11 +681,15 @@ class EnhancedReportGenerator:
                     border-bottom: 3px solid #2c3e50;
                     padding-bottom: 20px;
                     margin-bottom: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }}
                 .header h1 {{
                     color: #2c3e50;
                     margin: 0;
                     font-size: 28px;
+                    display: inline;
                 }}
                 .case-info {{
                     background: #ecf0f1;
@@ -752,7 +758,8 @@ class EnhancedReportGenerator:
         <body>
             <div class="report-container">
                 <div class="header">
-                    <h1>⚖️ Jurix Courtroom Simulation Report</h1>
+                    {logo_html}
+                    <h1>{self.report_template['header']['title']}</h1>
                 </div>
                 
                 <div class="case-info">
@@ -869,8 +876,8 @@ def create_sample_report():
         'case_type': 'criminal',
         'status': 'completed',
         'parties': {
-            'plaintiff': 'State Prosecutor',
-            'defendant': 'Defense Attorney',
+            'plaintiff': 'AI Prosecutor',
+            'defendant': 'AI Defendant',
             'judge': 'AI Judge'
         },
         'evidence_files': [

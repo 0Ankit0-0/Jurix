@@ -1,4 +1,4 @@
-// Enhanced LiveSimulation.jsx with Case Details Header
+// Enhanced LiveSimulation.jsx with true real-time updates
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, Download, Play, Pause, RotateCcw, MessageCircle, Loader2, FileText, Scale } from "lucide-react";
+import { ArrowLeft, Download, MessageCircle, Scale } from "lucide-react";
 import { simulationAPI, caseAPI, socket } from "@/services/api";
 import toast from "react-hot-toast";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -23,12 +23,9 @@ const LiveSimulation = () => {
   
   // State
   const [simulation, setSimulation] = useState(null);
-  const [caseData, setCaseData] = useState(null); // ✅ NEW: Store case details
+  const [caseData, setCaseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentTurn, setCurrentTurn] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [showChat, setShowChat] = useState(true);
   const [chatAnswers, setChatAnswers] = useState([]);
   const [isSimulating, setIsSimulating] = useState(true);
@@ -38,6 +35,7 @@ const LiveSimulation = () => {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [turns, setTurns] = useState([]);
+  const [evidenceParsed, setEvidenceParsed] = useState(false);
 
   useEffect(() => {
     if (!caseId || caseId === "undefined") {
@@ -46,25 +44,24 @@ const LiveSimulation = () => {
       return;
     }
 
-    // ✅ NEW: Fetch case details
     const fetchCaseData = async () => {
       try {
         const response = await caseAPI.getById(caseId);
         setCaseData(response.data.case);
       } catch (error) {
         console.error("Error fetching case data:", error);
-        // Don't fail simulation if case data fetch fails
       }
     };
 
     fetchCaseData();
 
-    // Join socket room
     socket.emit('join', caseId);
 
-    // Socket listeners
     socket.on('evidence_progress', (data) => {
       setProgress(data.progress);
+      if (data.progress === 100) {
+        setEvidenceParsed(true);
+      }
     });
 
     socket.on('simulation_progress', (data) => {
@@ -88,9 +85,10 @@ const LiveSimulation = () => {
       try {
         const response = await simulationAPI.getResults(caseId);
         setSimulation(response.data.simulation);
+        setTurns(response.data.simulation.turns); // Set final turns from result
         setLoading(false);
       } catch (err) {
-        setError("Failed to load simulation");
+        setError("Failed to load final simulation results");
         setLoading(false);
       }
     });
@@ -100,7 +98,6 @@ const LiveSimulation = () => {
       setLoading(false);
     });
 
-    // Check initial status
     const checkInitialStatus = async () => {
       try {
         const statusResponse = await simulationAPI.getStatus(caseId);
@@ -110,6 +107,7 @@ const LiveSimulation = () => {
           setIsSimulating(false);
           const response = await simulationAPI.getResults(caseId);
           setSimulation(response.data.simulation);
+          setTurns(response.data.simulation.turns);
           setLoading(false);
         } else {
           setIsSimulating(true);
@@ -153,42 +151,6 @@ const LiveSimulation = () => {
     }
   }, [caseId]);
 
-  const handlePlayPause = useCallback(() => setIsPlaying(!isPlaying), [isPlaying]);
-  const handleReset = useCallback(() => {
-    setCurrentTurn(0);
-    setIsPlaying(true);
-  }, []);
-  const handleSpeedChange = useCallback(() => {
-    const speeds = [0.5, 1, 1.5, 2];
-    const currentIndex = speeds.indexOf(playbackSpeed);
-    const nextIndex = (currentIndex + 1) % speeds.length;
-    setPlaybackSpeed(speeds[nextIndex]);
-  }, [playbackSpeed]);
-
-  useEffect(() => {
-    let interval;
-    if (isPlaying && simulation?.turns && !isSimulating) {
-      interval = setInterval(() => {
-        setCurrentTurn((prev) => {
-          if (prev >= simulation.turns.length - 1) {
-            setIsPlaying(false);
-            setIsTyping(false);
-            return prev;
-          }
-          setIsTyping(true);
-          const nextTurn = simulation.turns[prev + 1];
-          if (nextTurn) setTypingRole(nextTurn.role);
-          setTimeout(() => setIsTyping(false), 1500 / playbackSpeed);
-          return prev + 1;
-        });
-      }, 3000 / playbackSpeed);
-    }
-    return () => {
-      clearInterval(interval);
-      setIsTyping(false);
-    };
-  }, [isPlaying, simulation, playbackSpeed, isSimulating]);
-
   if (loading || (isSimulating && turns.length === 0)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -230,35 +192,16 @@ const LiveSimulation = () => {
     );
   }
 
-  if (!simulation) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <p className="text-muted-foreground">Simulation not available.</p>
-          <Button onClick={() => navigate(-1)} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const { simulation_text } = simulation;
-
   return (
     <div className="min-h-screen relative">
       <WaveGridBackground />
       <div className="container mx-auto px-4 py-8">
         
-        {/* ✅ ENHANCED HEADER WITH CASE DETAILS */}
         <div className="mb-8">
-          {/* Case Details Card */}
           <Card className="mb-6 border-2 border-primary/20 bg-gradient-to-br from-card/95 to-card/80 backdrop-blur-xl shadow-xl">
             <CardHeader>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  {/* Badges */}
                   <div className="flex items-center gap-2 mb-3">
                     <div className="flex items-center gap-2 text-primary">
                       <Scale className="h-4 w-4" />
@@ -272,17 +215,14 @@ const LiveSimulation = () => {
                     </Badge>
                   </div>
                   
-                  {/* Case Title */}
                   <CardTitle className="text-2xl md:text-3xl font-bold mb-2 text-foreground">
                     {caseData?.title || "Case Simulation"}
                   </CardTitle>
                   
-                  {/* Case Description */}
                   <CardDescription className="text-sm md:text-base leading-relaxed">
                     {caseData?.description || `Simulating case: ${caseId}`}
                   </CardDescription>
                   
-                  {/* Parties */}
                   {caseData?.parties && (
                     <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted-foreground">
                       <div>
@@ -298,19 +238,23 @@ const LiveSimulation = () => {
                   )}
                 </div>
                 
-                {/* Actions */}
                 <div className="flex flex-col items-end gap-2">
                   <Button onClick={handleDownloadReport} variant="default" size="sm" className="shadow-lg">
                     <Download className="h-4 w-4 mr-2" />
                     Download Report
                   </Button>
+                  {evidenceParsed && (
+                    <Button onClick={() => navigate(`/case/${caseId}/evidence-review`)} variant="outline" size="sm" className="shadow-lg">
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Review Evidence
+                    </Button>
+                  )}
                   <span className="text-xs text-muted-foreground font-mono">ID: {caseId.slice(0, 8)}...</span>
                 </div>
               </div>
             </CardHeader>
           </Card>
 
-          {/* Progress Info - Only show during simulation */}
           {isSimulating && (
             <Card className="mb-4 border-primary/30 bg-gradient-to-r from-primary/5 to-accent/5">
               <CardContent className="p-4">
@@ -327,7 +271,6 @@ const LiveSimulation = () => {
           )}
         </div>
 
-        {/* Ask Questions Section */}
         <div className="mb-8">
           <Button
             onClick={() => setShowChat(!showChat)}
@@ -365,36 +308,14 @@ const LiveSimulation = () => {
           )}
         </div>
 
-        {/* Controls */}
-        {!isSimulating && (
-          <div className="flex items-center gap-4 mb-6">
-            <Button onClick={handlePlayPause} variant="outline">
-              {isPlaying ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-              {isPlaying ? "Pause" : "Play"}
-            </Button>
-            <Button onClick={handleReset} variant="outline">
-              <RotateCcw className="h-4 w-4 mr-2" />
-              Reset
-            </Button>
-            <Button onClick={handleSpeedChange} variant="outline">
-              Speed: {playbackSpeed}x
-            </Button>
-            <div className="text-sm text-muted-foreground">
-              Turn {currentTurn + 1} of {turns.length}
-            </div>
-          </div>
-        )}
-
-        {/* Turns Display */}
         <div className="space-y-4">
-          {(isSimulating || (isTyping && currentTurn < turns.length - 1)) && (
+          {isTyping && (
             <TypingIndicator role={typingRole} thinkingText={thinkingText} />
           )}
 
           {turns.length > 20 ? (
-            // Use VirtualList for large lists
             <VirtualList
-              items={turns.slice(0, isSimulating ? turns.length : currentTurn + 1)}
+              items={turns}
               itemHeight={200} // Approximate height per turn
               containerHeight={600}
               renderItem={(turn, index) => (
@@ -407,8 +328,6 @@ const LiveSimulation = () => {
                   <Card className={`border-2 ${
                     isSimulating && index === turns.length - 1
                       ? 'border-primary shadow-lg ring-2 ring-primary/20'
-                      : !isSimulating && index === currentTurn
-                      ? 'border-primary shadow-lg'
                       : 'border-border'
                   }`}>
                     <CardHeader className="pb-3">
@@ -466,8 +385,7 @@ const LiveSimulation = () => {
               )}
             />
           ) : (
-            // Regular rendering for smaller lists
-            turns.slice(0, isSimulating ? turns.length : currentTurn + 1).map((turn, index) => (
+            turns.map((turn, index) => (
               <motion.div
                 key={`${turn.turn_number}-${index}`}
                 initial={{ opacity: 0, y: 20 }}
@@ -477,8 +395,6 @@ const LiveSimulation = () => {
                 <Card className={`border-2 ${
                   isSimulating && index === turns.length - 1
                     ? 'border-primary shadow-lg ring-2 ring-primary/20'
-                    : !isSimulating && index === currentTurn
-                    ? 'border-primary shadow-lg'
                     : 'border-border'
                 }`}>
                   <CardHeader className="pb-3">
@@ -537,11 +453,10 @@ const LiveSimulation = () => {
           )}
         </div>
 
-        {/* Full Transcript */}
-        {!isSimulating && simulation_text && (
+        {!isSimulating && simulation?.simulation_text && (
           <div className="mt-12">
             <h2 className="text-2xl font-bold mb-4">Full Transcript</h2>
-            <FormattedTranscript transcript={simulation_text} />
+            <FormattedTranscript transcript={simulation.simulation_text} />
           </div>
         )}
       </div>

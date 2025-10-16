@@ -52,6 +52,7 @@ backend/.flaskenv
 # Data & runtime folders
 backend/uploads/
 backend/uploaded_evidence/
+backend/tests/
 backend/__pycache__/
 backend/.pytest_cache/
 backend/.mypy_cache/
@@ -141,3 +142,7 @@ __tests__/
 *.crt
 secrets.json
 config.json
+
+tests/
+uploads/
+uploaded_evidence/

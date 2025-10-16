@@ -4,9 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
     Mail,
     Phone,
@@ -14,33 +12,21 @@ import {
     Edit,
     Save,
     X,
-    Eye,
-    EyeOff,
-    Heart,
     Camera,
-    Upload,
-    MessageCircle,
     User,
     Briefcase,
-    FileText,
 } from "lucide-react"
 import api from "@/services/api"
 import { toast } from "@/components/ui/toast"
-import AvatarUpload from "./avatarupload"
-
 
 export default function ProfilePage({ userId }) {
     const [isEditing, setIsEditing] = useState(false)
-    const [showComments, setShowComments] = useState({})
     const [user, setUser] = useState({})
     const [editedUser, setEditedUser] = useState({})
-    const [publishedCases, setPublishedCases] = useState([])
-    const [userCases, setUserCases] = useState([])
-    const [isPublishingCase, setIsPublishingCase] = useState(null)
 
-    // ✅ Fetch user data
+    // Fetch user data
     useEffect(() => {
-        if (!userId) return; // ⛔ don't call API without userId
+        if (!userId) return;
 
         const fetchUserData = async () => {
             try {
@@ -53,32 +39,10 @@ export default function ProfilePage({ userId }) {
             }
         };
 
-        const fetchPublishedCases = async () => {
-            try {
-                const res = await api.get(`/auth/${userId}/published-cases`);
-                setPublishedCases(res.data);
-            } catch (err) {
-                console.error("Failed to fetch published cases:", err);
-                toast.error("Failed to fetch published cases.");
-            }
-        };
-
-        const fetchUserCases = async () => {
-            try {
-                const res = await api.get(`/cases/user/${userId}`);
-                setUserCases(res.data.cases || []);
-            } catch (err) {
-                console.error("Failed to fetch user cases:", err);
-                // Don't show error toast for this as it's not critical
-            }
-        };
-
         fetchUserData();
-        fetchPublishedCases();
-        fetchUserCases();
     }, [userId]);
 
-    // ✅ Handlers
+    // Handlers
     const handleEdit = () => setIsEditing(true)
     const handleCancel = () => {
         setEditedUser(user)
@@ -104,31 +68,26 @@ export default function ProfilePage({ userId }) {
     const handleImageUpload = async (event) => {
         const file = event.target.files[0]
         if (file) {
-            // Validate file type
             if (!file.type.startsWith('image/')) {
                 toast.error("Please select a valid image file")
                 return
             }
 
-            // Validate file size (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
                 toast.error("Image size must be less than 5MB")
                 return
             }
 
             try {
-                // Create FormData for file upload
                 const formData = new FormData()
                 formData.append('avatar', file)
 
-                // Upload the image
                 const uploadResponse = await api.post(`/auth/${userId}/upload-avatar`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data'
                     }
                 })
 
-                // Update the user state with the uploaded image URL
                 const imageUrl = uploadResponse.data.avatar_url
                 setEditedUser({ ...editedUser, avatar: imageUrl })
                 setUser({ ...user, avatar: imageUrl })
@@ -141,47 +100,6 @@ export default function ProfilePage({ userId }) {
         }
     }
 
-    const toggleCasePrivacy = (id) => {
-        setPublishedCases((prev) =>
-            prev.map((c) =>
-                c.id === id ? { ...c, isPublic: !c.isPublic } : c
-            )
-        )
-    }
-
-    const toggleComments = (id) => {
-        setShowComments((prev) => ({ ...prev, [id]: !prev[id] }))
-    }
-
-    const handlePublishCase = async (caseId, isCurrentlyPublic) => {
-        setIsPublishingCase(caseId);
-
-        try {
-            if (isCurrentlyPublic) {
-                await api.post(`/cases/${caseId}/unpublish`, { user_id: userId });
-                toast.success("Case is now private");
-            } else {
-                await api.post(`/cases/${caseId}/publish`, { user_id: userId });
-                toast.success("Case published successfully!");
-            }
-
-            // Refresh both published cases and user cases
-            const [publishedRes, userCasesRes] = await Promise.all([
-                api.get(`/auth/${userId}/published-cases`),
-                api.get(`/cases/user/${userId}`)
-            ]);
-
-            setPublishedCases(publishedRes.data);
-            setUserCases(userCasesRes.data.cases || []);
-        } catch (error) {
-            console.error("Failed to update case privacy:", error);
-            toast.error("Failed to update case privacy");
-        } finally {
-            setIsPublishingCase(null);
-        }
-    }
-
-    // ✅ Role-specific UI (extend later with more roles)
     const renderRoleSpecificContent = () => {
         if (user.role === "lawyer") {
             return (
@@ -420,111 +338,6 @@ export default function ProfilePage({ userId }) {
                         {/* Role-specific Content */}
                         {renderRoleSpecificContent()}
 
-                        {/* Published Cases */}
-                        <Card className="shadow-xl border-2 border-border/50">
-                            <CardHeader className="border-b border-border/50 bg-muted/20">
-                                <CardTitle className="flex items-center gap-2 text-xl">
-                                    <FileText className="h-5 w-5 text-primary" />
-                                    Published Cases
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {publishedCases.length > 0 ? (
-                                        publishedCases.map((caseData) => (
-                                            <div
-                                                key={caseData.id}
-                                                className="border-2 border-border/50 rounded-xl p-5 space-y-3 hover:border-primary/30 transition-all shadow-sm hover:shadow-md bg-card/50"
-                                            >
-                                                <div className="flex flex-col sm:flex-row justify-between gap-3">
-                                                    <div>
-                                                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                            <h3 className="font-semibold">{caseData.title}</h3>
-                                                            <Badge variant="outline">{caseData.type}</Badge>
-                                                            <Badge
-                                                                variant={
-                                                                    caseData.isPublic ? "default" : "secondary"
-                                                                }
-                                                            >
-                                                                {caseData.isPublic ? "Public" : "Private"}
-                                                            </Badge>
-                                                        </div>
-                                                        <p className="text-sm text-muted-foreground mb-2">
-                                                            {caseData.description}
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            Created: {caseData.createdAt}
-                                                        </p>
-                                                    </div>
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => toggleCasePrivacy(caseData.id)}
-                                                        className="self-start sm:self-center"
-                                                    >
-                                                        {caseData.isPublic ? (
-                                                            <EyeOff className="h-4 w-4 mr-1" />
-                                                        ) : (
-                                                            <Eye className="h-4 w-4 mr-1" />
-                                                        )}
-                                                        {caseData.isPublic ? "Make Private" : "Make Public"}
-                                                    </Button>
-                                                </div>
-
-                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pt-2 border-t gap-2">
-                                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                        <span className="flex items-center gap-1">
-                                                            <Heart className="h-4 w-4" />
-                                                            {caseData.likes}
-                                                        </span>
-                                                        <span className="flex items-center gap-1">
-                                                            <MessageCircle className="h-4 w-4" />
-                                                            {caseData.comments}
-                                                        </span>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => toggleComments(caseData.id)}
-                                                    >
-                                                        {showComments[caseData.id]
-                                                            ? "Hide Comments"
-                                                            : "View Comments"}
-                                                    </Button>
-                                                </div>
-
-                                                {showComments[caseData.id] && (
-                                                    <div className="mt-4 p-3 bg-muted rounded-lg space-y-2">
-                                                        <h4 className="font-medium mb-2">
-                                                            Recent Comments
-                                                        </h4>
-                                                        {/* ✅ Mock comments */}
-                                                        <div className="flex gap-2">
-                                                            <Avatar className="h-6 w-6">
-                                                                <AvatarFallback className="text-xs">
-                                                                    JD
-                                                                </AvatarFallback>
-                                                            </Avatar>
-                                                            <div>
-                                                                <p className="font-medium">John Doe</p>
-                                                                <p className="text-muted-foreground">
-                                                                    Excellent analysis of the constitutional
-                                                                    implications!
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-muted-foreground text-center py-8">
-                                            No published cases yet.
-                                        </p>
-                                    )}
-                                </div>
-                            </CardContent>
-                        </Card>
                     </div>
                 </main>
             </div>

@@ -49,7 +49,7 @@ def init_mongo_client(max_retries=3, retry_delay=5):
                 MONGO_URI,
                 server_api=ServerApi("1"),
                 tlsCAFile=certifi.where(),       # certifi CA bundle for SSL
-                serverSelectionTimeoutMS=30000,  # 30s timeout
+                serverSelectionTimeoutMS=5000,  # 30s timeout
                 connectTimeoutMS=30000,
                 socketTimeoutMS=30000,
                 maxPoolSize=50,

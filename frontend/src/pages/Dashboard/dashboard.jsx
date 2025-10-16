@@ -10,9 +10,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { Badge } from "@/components/ui/badge";
 import { SkeletonDashboard } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useDebounce } from "@/hooks/useDebounce";
-import { debounce } from "@/utils/performance";
-import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut";
+import debounce from "@/utils/performance";
 // import CaseUploadBackground from "@/components/ui/CaseUploadBackground";
 
 import {
@@ -67,22 +65,35 @@ export default function Dashboard({ userName }) {
   const [filteredCases, setFilteredCases] = useState([]);
 
   // Debounce search term to avoid excessive filtering
-  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
 
 
   // Keyboard shortcuts
-  useKeyboardShortcut(['ctrl', 'k'], (e) => {
-    e.preventDefault()
-    document.querySelector('input[type="text"]')?.focus()
-  })
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.ctrlKey && event.key === 'k') {
+        event.preventDefault()
+        document.querySelector('input[type="text"]')?.focus()
+      } else if (event.ctrlKey && event.shiftKey && event.key === 'G') {
+        setViewMode(viewMode === 'grid' ? 'list' : 'grid')
+      } else if (event.ctrlKey && event.shiftKey && event.key === 'F') {
+        setShowFilters(!showFilters)
+      }
+    }
 
-  useKeyboardShortcut(['ctrl', 'shift', 'g'], () => {
-    setViewMode(viewMode === 'grid' ? 'list' : 'grid')
-  })
-
-  useKeyboardShortcut(['ctrl', 'shift', 'f'], () => {
-    setShowFilters(!showFilters)
-  })
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [viewMode, showFilters])
 
   useEffect(() => {
     if (!isLoggedIn) {

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, FileText, Calendar, User } from "lucide-react"
 import { toast } from "react-hot-toast"
 import WaveGridBackground from "@/components/ui/WaveGridBackground"
+import CaseUploadBackground from "@/components/ui/CaseUploadBackground"
 
 export default function CaseDiscussions() {
   const { caseId } = useParams()
@@ -62,7 +63,7 @@ export default function CaseDiscussions() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <CaseUploadBackground />
+      <WaveGridBackground />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         {/* Back Button */}
         <Button
