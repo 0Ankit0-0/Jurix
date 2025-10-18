@@ -1,3 +1,28 @@
+"""
+Case Management Routes Module
+
+This module handles all case-related operations in the Jurix legal simulation platform:
+- Case creation, retrieval, and updates
+- Evidence upload and management
+- Case privacy settings (public/private)
+- PDF report generation
+- Public case browsing and simulation
+
+Key Features:
+- UUID-based case identification
+- Evidence parsing and storage
+- Status tracking (draft -> ready_for_simulation -> completed)
+- Public case sharing and community features
+- PDF export functionality
+
+Dependencies:
+- Flask Blueprint for routing
+- MongoDB for case and evidence storage
+- Document parsing services for evidence processing
+- ReportLab for PDF generation
+
+"""
+
 from flask import Blueprint, request, jsonify, send_file
 import uuid
 from datetime import datetime

@@ -1,3 +1,19 @@
+"""
+Jurix Backend Application
+
+This is the main Flask application for the Jurix legal simulation platform.
+It provides RESTful APIs for user authentication, case management, simulations,
+reports, discussions, uploads, and chatbot interactions.
+
+Features:
+- CORS support for frontend integration
+- SocketIO for real-time communication
+- Blueprint-based routing
+- Health checks and error handling
+- Environment-based configuration
+
+"""
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from socketio_instance import socketio
@@ -42,9 +58,9 @@ CORS(app,
      origins=allowed_origins,
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
      allow_headers=[
-         "Content-Type", 
-         "Authorization", 
-         "X-Requested-With", 
+         "Content-Type",
+         "Authorization",
+         "X-Requested-With",
          "Accept", 
          "Origin",
          "Access-Control-Request-Method",
@@ -60,7 +76,12 @@ CORS(app,
 
 @app.before_request
 def handle_preflight():
-    """Handle CORS preflight requests"""
+    """
+    Handle CORS preflight requests.
+
+    This function intercepts OPTIONS requests and sets appropriate CORS headers
+    to allow cross-origin requests from configured origins.
+    """
     if request.method == "OPTIONS":
         response = app.make_default_options_response()
         headers = response.headers
@@ -79,7 +100,12 @@ def handle_preflight():
 
 @app.before_request
 def log_request():
-    """Log all incoming requests for debugging"""
+    """
+    Log all incoming requests for debugging.
+
+    This middleware logs request method, path, and origin for non-static endpoints.
+    Useful for monitoring API usage and debugging.
+    """
     if request.endpoint and not request.endpoint.startswith('static'):
         print(f"📥 {request.method} {request.path} - Origin: {request.headers.get('Origin', 'None')}")
 
@@ -129,17 +155,37 @@ except Exception as e:
 # Root endpoint
 @app.route("/")
 def home():
+    """
+    Root endpoint for the API.
+
+    Returns a simple health message indicating the backend is running.
+
+    Returns:
+        JSON: Status message and health indicator
+    """
     return jsonify({"message": "Jurix Backend is running! 🏛️", "status": "healthy"})
 
 # Favicon handler to prevent 404 errors
 @app.route("/favicon.ico")
 def favicon():
-    """Handle favicon requests to prevent 404 errors"""
+    """
+    Handle favicon requests to prevent 404 errors.
+
+    Returns an empty response with 204 status code.
+    """
     return '', 204
 
 # Enhanced health check
 @app.route("/api/health")
 def health_check():
+    """
+    Enhanced health check endpoint.
+
+    Tests database connection and returns status of various services.
+
+    Returns:
+        JSON: Health status of services, database, environment info, and timestamp
+    """
     try:
         # Test database connection
         from db.mongo import test_connection
@@ -165,6 +211,17 @@ def health_check():
 # 404 error handler
 @app.errorhandler(404)
 def handle_not_found(error):
+    """
+    Handle 404 Not Found errors.
+
+    Logs the error and returns a JSON response with error details.
+
+    Args:
+        error: The 404 error object
+
+    Returns:
+        JSON: Error message and status code 404
+    """
     print(f"❌ 404 Not Found: {request.path}")
     return jsonify({
         "error": "Not Found",
@@ -174,6 +231,18 @@ def handle_not_found(error):
 # Global error handler
 @app.errorhandler(Exception)
 def handle_error(error):
+    """
+    Global error handler for unhandled exceptions.
+
+    Logs the error with traceback and returns a JSON error response.
+    In production, hides detailed error messages for security.
+
+    Args:
+        error: The exception object
+
+    Returns:
+        JSON: Error message and status code 500
+    """
     print(f"❌ Unhandled error: {error}")
     import traceback
     traceback.print_exc()
@@ -191,4 +260,3 @@ if __name__ == "__main__":
 
     socketio.init_app(app, cors_allowed_origins="*")
     socketio.run(app, debug=True, host="0.0.0.0", port=5001)
-    

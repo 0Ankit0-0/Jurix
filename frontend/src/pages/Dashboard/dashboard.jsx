@@ -1,3 +1,34 @@
+/**
+ * Dashboard Component
+ *
+ * Main dashboard page for the Jurix legal simulation platform.
+ * Displays user's cases and public cases with filtering, searching, and management features.
+ *
+ * Features:
+ * - Tabbed interface for My Cases and Public Cases
+ * - Advanced search and filtering by case type
+ * - Grid/List view modes
+ * - Case management (create, delete, publish/unpublish)
+ * - Simulation controls (start, replay, download reports)
+ * - Responsive design with mobile-friendly filters
+ * - Keyboard shortcuts for power users
+ *
+ * State Management:
+ * - Uses React hooks for local state
+ * - Debounced search for performance
+ * - Real-time filtering and sorting
+ * - Error handling with toast notifications
+ *
+ * Dependencies:
+ * - React Router for navigation
+ * - React Hot Toast for notifications
+ * - Custom hooks (useAuth, useDebounce)
+ * - API services for case and simulation operations
+ * - UI components from shadcn/ui
+ *
+ * Author: Jurix Development Team
+ */
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { caseAPI, simulationAPI } from "@/services/api";
@@ -10,7 +41,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { Badge } from "@/components/ui/badge";
 import { SkeletonDashboard } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import debounce from "@/utils/performance";
+import { useDebounce } from "@/hooks/useDebounce";
 // import CaseUploadBackground from "@/components/ui/CaseUploadBackground";
 
 import {
@@ -65,17 +96,7 @@ export default function Dashboard({ userName }) {
   const [filteredCases, setFilteredCases] = useState([]);
 
   // Debounce search term to avoid excessive filtering
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm]);
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
 
   // Keyboard shortcuts
@@ -149,7 +170,7 @@ export default function Dashboard({ userName }) {
   const handleTogglePublic = async (caseId, currentStatus) => {
     try {
       // Use case_id (not MongoDB _id) for the API call
-      const userId = (user?._id?.$oid || user?._id || user?.id || user?.user_id);
+      const userId = user?._id || user?.id || user?.user_id;
 
       if (!userId) {
         toast.error("User not authenticated");
@@ -218,10 +239,10 @@ export default function Dashboard({ userName }) {
   const handleLikeToggle = async (caseId, isLiked) => {
     try {
       if (isLiked) {
-        await caseAPI.like(caseId, user._id || user.id);
+        await caseAPI.like(caseId, user?._id || user?.id);
         toast.success("Added to favorites");
       } else {
-        await caseAPI.unlike(caseId, user._id || user.id);
+        await caseAPI.unlike(caseId, user?._id || user?.id);
         toast.success("Removed from favorites");
       }
       loadMyCases(); // Refresh cases
@@ -231,7 +252,7 @@ export default function Dashboard({ userName }) {
     }
   }
 
-  const handleCommentClick = (caseId) => {
+  const handleCommentClick = (caseId, updateCommentCount) => {
     navigate(`/case/${caseId}/discussions`);
   }
 
@@ -255,12 +276,7 @@ export default function Dashboard({ userName }) {
   const handleReplaySimulation = async (caseId) => {
     try {
       const response = await caseAPI.getById(caseId);
-      const caseData = response.data.case; // Corrected line
-
-      if (!caseData.simulation_results) {
-        toast.error("No simulation results available for replay");
-        return;
-      }
+      const caseData = response.data.case;
 
       navigate(`/simulation/replay/${caseData.case_id}`);
     } catch (error) {
@@ -272,12 +288,6 @@ export default function Dashboard({ userName }) {
   const handleDownload = async (caseId) => {
     try {
       const response = await caseAPI.getById(caseId);
-      const caseData = response.data.case; // Corrected line
-
-      if (!caseData.simulation_results) {
-        toast.error("No simulation results available for download");
-        return;
-      }
 
       const reportResponse = await simulationAPI.getReport(caseId);
 
@@ -512,6 +522,7 @@ export default function Dashboard({ userName }) {
                 description: caseItem.description || "No description available",
                 type: caseItem.case_type || caseItem.type || "Other",
                 // Handle both isPublic and is_public fields
+
                 isPublic: Boolean(caseItem.isPublic || caseItem.is_public),
                 likeCount: caseItem.likeCount || caseItem.like_count || 0,
                 commentCount: caseItem.commentCount || caseItem.comment_count || 0,
@@ -519,7 +530,7 @@ export default function Dashboard({ userName }) {
                 hasSimulation: Boolean(caseItem.simulation_results),
                 // Add handlers for card actions
                 onLikeToggle: (isLiked) => handleLikeToggle(caseItem.case_id, isLiked),
-                onCommentClick: () => handleCommentClick(caseItem.case_id),
+                onCommentClick: () => handleCommentClick(caseItem.case_id, (newCount) => setCases(prevCases => prevCases.map(c => c.case_id === caseItem.case_id ? { ...c, commentCount: newCount } : c))),
                 onStart: () => handleStartSimulation(caseItem.case_id),
                 onReplay: () => handleReplaySimulation(caseItem.case_id),
                 onDownload: () => handleDownload(caseItem.case_id),

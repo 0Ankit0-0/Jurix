@@ -1,10 +1,30 @@
+"""
+Authentication Routes Module
+
+This module handles all user authentication related operations including:
+- Google OAuth login/signup
+- Local user registration and login
+- JWT token management
+- User profile management
+- Password validation and security
+
+Dependencies:
+- Flask Blueprint for routing
+- JWT for token management
+- Google OAuth2 for social login
+- MongoDB for user storage
+- Password validation utilities
+
+Author: Jurix Development Team
+"""
+
 from flask import Blueprint, request, jsonify
 import re
 import jwt
 import datetime
 import os
 from model.user import (
-    create_user, get_user_by_email, get_user_by_id, 
+    create_user, get_user_by_email, get_user_by_id,
     update_user, verify_password, email_exists
 )
 from bson import ObjectId

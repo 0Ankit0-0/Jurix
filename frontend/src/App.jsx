@@ -1,3 +1,33 @@
+/**
+ * Main Application Component
+ *
+ * This is the root component of the Jurix legal simulation platform frontend.
+ * It handles routing, authentication, error boundaries, and performance monitoring.
+ *
+ * Features:
+ * - React Router for client-side navigation
+ * - Lazy loading with retry logic for performance
+ * - Protected routes for authenticated users
+ * - Error boundaries for graceful error handling
+ * - Page transitions with Framer Motion
+ * - Performance monitoring and analytics
+ * - Service worker registration for PWA features
+ * - Toast notifications for user feedback
+ *
+ * Architecture:
+ * - Uses React Router v6 with nested routes
+ * - Implements code splitting with React.lazy
+ * - Includes global error boundary and loading states
+ * - Supports both public and protected routes
+ *
+ * Dependencies:
+ * - React Router DOM for routing
+ * - Framer Motion for animations
+ * - React Hot Toast for notifications
+ * - Custom utilities for monitoring and performance
+ *
+ */
+
 import React, { Suspense, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
