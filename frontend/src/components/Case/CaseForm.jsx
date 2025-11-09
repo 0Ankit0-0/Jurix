@@ -23,8 +23,13 @@ const CaseForm = () => {
     case_type: "",
     plaintiff: "",
     defendant: "",
+    victim: "",
+    witnesses: "",
     has_evidence: false,
-    evidence: null,
+    evidenceFiles: [],
+    useAiLawyers: false,
+    useAiVictim: false,
+    useAiWitnesses: false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -56,17 +61,19 @@ const CaseForm = () => {
         parties: {
           plaintiff: formData.plaintiff || "Plaintiff",
           defendant: formData.defendant || "Defendant",
+          victim: formData.victim || "",
+          witnesses: formData.witnesses.split(',').map(w => w.trim()).filter(w => w),
           judge: "AI Judge",
         },
       });
 
       const caseId = caseResponse.data.case_id;
 
-      if (formData.has_evidence && formData.evidence) {
+      if (formData.has_evidence && formData.evidenceFiles.length > 0) {
         const formDataUpload = new FormData();
-        formDataUpload.append("file", formData.evidence);
-        formDataUpload.append("title", formData.evidence.name);
-        formDataUpload.append("description", "Initial case evidence");
+        formData.evidenceFiles.forEach(file => {
+          formDataUpload.append("file", file);
+        });
 
         await caseAPI.uploadEvidence(caseId, formDataUpload);
       }
@@ -83,14 +90,15 @@ const CaseForm = () => {
   };
   
   const handleFileChange = (files) => {
-    if (files && files[0]) {
-      const file = files[0];
+    if (files && files.length > 0) {
+      const fileList = Array.from(files);
       const maxSize = 20 * 1024 * 1024; // 20MB
-      if (file.size > maxSize) {
-        toast.error("File too large. Max size is 20MB.");
+      const oversizedFiles = fileList.filter(file => file.size > maxSize);
+      if (oversizedFiles.length > 0) {
+        toast.error(`${oversizedFiles.length} file(s) are too large. Max size is 20MB.`);
         return;
       }
-      setFormData({ ...formData, evidence: file });
+      setFormData({ ...formData, evidenceFiles: [...formData.evidenceFiles, ...fileList] });
     }
   };
 
@@ -178,6 +186,49 @@ const CaseForm = () => {
                 </Select>
               </div>
 
+              <div className="pt-4 border-t border-border/50 space-y-4">
+                <div className="flex items-center space-x-3">
+                  <input type="checkbox" id="use_ai_lawyers" checked={formData.useAiLawyers} onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    setFormData(prevData => ({
+                      ...prevData,
+                      useAiLawyers: isChecked,
+                      plaintiff: isChecked ? "AI Lawyer (Prosecution)" : "",
+                      defendant: isChecked ? "AI Lawyer (Defense)" : "",
+                    }));
+                  }} className="h-4 w-4 rounded border-border text-primary focus:ring-primary"/>
+                  <Label htmlFor="use_ai_lawyers" className="font-semibold cursor-pointer">
+                    Use AI Lawyers
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <input type="checkbox" id="use_ai_victim" checked={formData.useAiVictim} onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    setFormData(prevData => ({
+                      ...prevData,
+                      useAiVictim: isChecked,
+                      victim: isChecked ? "AI Victim" : "",
+                    }));
+                  }} className="h-4 w-4 rounded border-border text-primary focus:ring-primary"/>
+                  <Label htmlFor="use_ai_victim" className="font-semibold cursor-pointer">
+                    Add AI Victim
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <input type="checkbox" id="use_ai_witnesses" checked={formData.useAiWitnesses} onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    setFormData(prevData => ({
+                      ...prevData,
+                      useAiWitnesses: isChecked,
+                      witnesses: isChecked ? "AI Witness" : "",
+                    }));
+                  }} className="h-4 w-4 rounded border-border text-primary focus:ring-primary"/>
+                  <Label htmlFor="use_ai_witnesses" className="font-semibold cursor-pointer">
+                    Add AI Witnesses
+                  </Label>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="plaintiff">Plaintiff</Label>
@@ -191,6 +242,23 @@ const CaseForm = () => {
                   <div className="relative">
                     <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input id="defendant" placeholder="Defendant name" value={formData.defendant} onChange={(e) => setFormData({ ...formData, defendant: e.target.value })} className="pl-10"/>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="victim">Victim</Label>
+                   <div className="relative">
+                     <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                     <Input id="victim" placeholder="Victim name" value={formData.victim} onChange={(e) => setFormData({ ...formData, victim: e.target.value })} className="pl-10"/>
+                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="witnesses">Witnesses (comma-separated)</Label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input id="witnesses" placeholder="e.g., John Smith, Jane Doe" value={formData.witnesses} onChange={(e) => setFormData({ ...formData, witnesses: e.target.value })} className="pl-10"/>
                   </div>
                 </div>
               </div>
@@ -211,19 +279,19 @@ const CaseForm = () => {
                       }`}
                       onDragEnter={handleDrag} onDragLeave={handleDrag} onDragOver={handleDrag} onDrop={handleDrop}
                     >
-                      <input type="file" id="evidence" onChange={(e) => handleFileChange(e.target.files)} className="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt"/>
+                      <input type="file" id="evidence" onChange={(e) => handleFileChange(e.target.files)} className="hidden" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.txt" multiple/>
                       <label htmlFor="evidence" className="flex flex-col items-center space-y-2 cursor-pointer">
                         <div className={`p-3 rounded-full transition-colors ${dragActive ? 'bg-primary/20' : 'bg-muted'}`}>
                            <Upload className={`w-8 h-8 transition-colors ${dragActive ? 'text-primary' : 'text-muted-foreground'}`} />
                         </div>
-                        <span className="text-sm font-semibold text-foreground">
-                          {formData.evidence ? formData.evidence.name : "Click to upload or drag & drop"}
+                        <span class="text-sm font-semibold text-foreground">
+                          {formData.evidenceFiles.length > 0 ? `${formData.evidenceFiles.length} file(s) selected` : "Click to upload or drag & drop"}
                         </span>
                         <span className="text-xs text-muted-foreground">PDF, DOCX, JPG, TXT (Max 20MB)</span>
                       </label>
-                      {formData.evidence && (
+                      {formData.evidenceFiles.length > 0 && (
                         <div className="mt-4 flex items-center justify-center gap-2 text-sm text-success font-medium">
-                            <Check className="h-4 w-4" /> File selected
+                            <Check className="h-4 w-4" /> {formData.evidenceFiles.length} file(s) selected
                         </div>
                       )}
                     </div>

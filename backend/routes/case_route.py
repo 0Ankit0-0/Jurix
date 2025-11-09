@@ -37,10 +37,7 @@ from model.case_model import (
 from model.evidence_model import create_evidence, list_evidences
 from services.parsing.document_parsing_services import master_parser
 import os
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib import colors
+from services.document_Service.report_generator import generate_case_pdf
 from io import BytesIO
 
 case_bp = Blueprint('cases', __name__)
@@ -81,6 +78,8 @@ def create_new_case():
             'parties': {
                 'plaintiff': data.get('plaintiff', ''),
                 'defendant': data.get('defendant', ''),
+                'victim': data.get('victim', ''),
+                'witnesses': data.get('witnesses', []),
                 'judge': data.get('judge', 'AI Judge'),
             },
             'evidence_files': [],
@@ -540,147 +539,13 @@ def download_case_pdf(case_id):
         if not case:
             return jsonify({'error': 'Case not found'}), 404
 
-        # Create PDF buffer
-        buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter)
-        styles = getSampleStyleSheet()
+        # Get evidence for the case
+        evidence_list = list_evidences({'case_id': case_id})
 
-        # Custom styles
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=16,
-            spaceAfter=30,
-        )
-        heading_style = ParagraphStyle(
-            'CustomHeading',
-            parent=styles['Heading2'],
-            fontSize=14,
-            spaceAfter=12,
-        )
-        normal_style = styles['Normal']
-
-        # Build PDF content
-        content = []
-
-        # Title
-        content.append(Paragraph("COURTROOM SIMULATION - CASE REPORT", title_style))
-        content.append(Spacer(1, 12))
-
-        # Case Information Table
-        case_data = [
-            ['Case ID:', case_id],
-            ['Title:', case.get('title', 'N/A')],
-            ['Type:', case.get('case_type', 'N/A')],
-            ['Status:', case.get('status', 'N/A')],
-            ['Created:', case.get('created_at', 'N/A')],
-        ]
-
-        case_table = Table(case_data, colWidths=[100, 400])
-        case_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        content.append(case_table)
-        content.append(Spacer(1, 20))
-
-        # Parties
-        content.append(Paragraph("PARTIES INVOLVED", heading_style))
-        parties = case.get('parties', {})
-        parties_data = [
-            ['Plaintiff:', parties.get('plaintiff', 'Not specified')],
-            ['Defendant:', parties.get('defendant', 'Not specified')],
-            ['Judge:', parties.get('judge', 'AI Judge')],
-        ]
-        parties_table = Table(parties_data, colWidths=[100, 400])
-        parties_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        content.append(parties_table)
-        content.append(Spacer(1, 20))
-
-        # Case Description
-        content.append(Paragraph("CASE DESCRIPTION", heading_style))
-        description = case.get('description', 'No description provided')
-        content.append(Paragraph(description, normal_style))
-        content.append(Spacer(1, 20))
-
-        # Simulation Results
-        simulation_results = case.get('simulation_results')
-        if simulation_results:
-            content.append(Paragraph("SIMULATION RESULTS", heading_style))
-            sim_data = [
-                ['Simulation ID:', simulation_results.get('simulation_id', 'N/A')],
-                ['Evidence Analyzed:', str(simulation_results.get('evidence_analyzed', 0))],
-                ['Generated At:', str(simulation_results.get('generated_at', 'N/A'))],
-            ]
-            sim_table = Table(sim_data, colWidths=[120, 380])
-            sim_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (0, -1), colors.lightgreen),
-                ('TEXTCOLOR', (0, 0), (0, -1), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
-            content.append(sim_table)
-            content.append(Spacer(1, 12))
-
-            # Simulation Text
-            content.append(Paragraph("Simulation Transcript:", styles['Heading3']))
-            sim_text = simulation_results.get('simulation_text', 'No simulation text available')
-            # Truncate if too long for PDF
-            if len(sim_text) > 2000:
-                sim_text = sim_text[:2000] + "..."
-            content.append(Paragraph(sim_text, normal_style))
-            content.append(Spacer(1, 20))
-
-        # Evidence Summary
-        evidence_files = list_evidences({'case_id': case_id})
-        if evidence_files:
-            content.append(Paragraph("EVIDENCE SUMMARY", heading_style))
-            evidence_data = [['Title', 'Type', 'Words', 'Uploaded']]
-            for evidence in evidence_files[:10]:  # Limit to 10 for PDF
-                evidence_data.append([
-                    evidence.get('title', 'N/A')[:30],
-                    evidence.get('evidence_type', 'N/A'),
-                    str(evidence.get('word_count', 0)),
-                    str(evidence.get('uploaded_at', 'N/A'))[:10]
-                ])
-
-            evidence_table = Table(evidence_data, colWidths=[150, 80, 60, 80])
-            evidence_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-                ('FONTSIZE', (0, 0), (-1, -1), 9),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
-            content.append(evidence_table)
-            content.append(Spacer(1, 20))
-
-        # Footer
-        content.append(Paragraph(f"Report generated by Courtroom Simulation System on {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC", styles['Italic']))
-
-        # Build PDF
-        doc.build(content)
+        # Generate PDF using the new service
+        buffer = generate_case_pdf(case, evidence_list)
 
         # Prepare response
-        buffer.seek(0)
         filename = f"case_report_{case_id}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.pdf"
 
         return send_file(

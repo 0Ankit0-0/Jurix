@@ -75,30 +75,6 @@ CORS(app,
 
 
 @app.before_request
-def handle_preflight():
-    """
-    Handle CORS preflight requests.
-
-    This function intercepts OPTIONS requests and sets appropriate CORS headers
-    to allow cross-origin requests from configured origins.
-    """
-    if request.method == "OPTIONS":
-        response = app.make_default_options_response()
-        headers = response.headers
-        origin = request.headers.get('Origin')
-        
-        # Allow specific origin or all if in development
-        if origin and (origin in allowed_origins or os.getenv("ENVIRONMENT") != "production"):
-            headers['Access-Control-Allow-Origin'] = origin
-        
-        headers['Access-Control-Allow-Methods'] = 'GET,PUT,POST,DELETE,OPTIONS,PATCH'
-        headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With,Accept,Origin'
-        headers['Access-Control-Allow-Credentials'] = 'true'
-        headers['Access-Control-Max-Age'] = '3600'
-        
-        return response
-
-@app.before_request
 def log_request():
     """
     Log all incoming requests for debugging.

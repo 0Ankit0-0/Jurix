@@ -287,6 +287,32 @@ def generate_simulation_report(case_data, simulation_results, output_path):
     elements.append(Paragraph(case_data.get('description', 'No description provided'), styles['Normal']))
     elements.append(Spacer(1, 20))
 
+    # 2.1. Parties Involved
+    elements.append(Paragraph("2.1. Parties Involved", styles['SectionHeader']))
+    elements.append(Spacer(1, 10))
+    
+    parties = case_data.get('parties', {})
+    parties_info = [
+        ['Plaintiff:', parties.get('plaintiff', 'Not specified')],
+        ['Defendant:', parties.get('defendant', 'Not specified')],
+        ['Victim(s):', ', '.join(parties.get('victims', ['Not specified']))],
+        ['Witness(es):', ', '.join(parties.get('witnesses', ['Not specified']))],
+        ['Judge:', parties.get('judge', 'AI Judge')],
+    ]
+    
+    parties_table = Table(parties_info, colWidths=[1.5*inch, 5*inch])
+    parties_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#eff6ff')),
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor('#1f2937')),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('PADDING', (0, 0), (-1, -1), 8),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#dbeafe'))
+    ]))
+    elements.append(parties_table)
+    elements.append(Spacer(1, 20))
+
     # 3. Simulation Overview
     elements.append(Paragraph("3. Simulation Overview", styles['SectionHeader']))
     elements.append(Spacer(1, 10))

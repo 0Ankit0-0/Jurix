@@ -76,6 +76,8 @@ class ProsecutorAgent(BaseAgent):
         Type: {case_data.get('case_type', 'unknown')}
         Defendant: {case_data.get('parties', {}).get('defendant', 'the defendant')}
         Plaintiff: {case_data.get('parties', {}).get('plaintiff', 'the people')}
+        Victim: {case_data.get('parties', {}).get('victim', 'Not specified')}
+        Witnesses: {', '.join(case_data.get('parties', {}).get('witnesses', [])) or 'None listed'}
 
         Case Theory: {self.prosecution_strategy.get('main_theory', 'Defendant is responsible for the alleged wrongdoing')}
 

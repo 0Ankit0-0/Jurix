@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime
 from model.case_model import get_case_by_id, update_case
+import os
 
 # Create Blueprint for report routes
 report_bp = Blueprint('reports', __name__)
@@ -26,30 +27,45 @@ def generate_detailed_report(case_id):
         if not simulation_results:
             return jsonify({'error': 'No simulation found for this case. Please run simulation first.'}), 400
         
-        simulation_text = simulation_results.get('simulation_text', '')
+        # Import the correct report generator
+        print("🔍 Step 1: Loading enhanced report generator...")
+        from services.ai_services.report_generator import generate_simulation_report
         
-        # Generate detailed report using EnhancedReportGenerator
-        print("🔍 Step 1: Generating comprehensive report...")
-        from services.document_Service.report_generator import EnhancedReportGenerator
-        generator = EnhancedReportGenerator()
-        report_data = generator.generate_comprehensive_report(case, simulation_results)
+        # Define output path for the report
+        reports_dir = os.path.join(os.getcwd(), 'backend', 'reports')
+        if not os.path.exists(reports_dir):
+            os.makedirs(reports_dir)
         
-        # Save report to case
-        print("💾 Step 3: Saving report...")
+        report_filename = f"case_{case_id}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        output_path = os.path.join(reports_dir, report_filename)
+        
+        # Generate detailed report
+        print(f"📝 Step 2: Generating comprehensive report PDF at {output_path}...")
+        report_path = generate_simulation_report(case, simulation_results, output_path)
+        
+        if not report_path or not os.path.exists(report_path):
+            return jsonify({'error': 'Failed to generate report PDF'}), 500
+            
+        # Save report path to case
+        print("💾 Step 3: Saving report path to database...")
         update_data = {
-            'detailed_report': report_data
+            'detailed_report': {
+                'report_path': report_path,
+                'generated_at': datetime.utcnow().isoformat(),
+                'report_id': f"rep_{case_id}" 
+            }
         }
         
         update_success = update_case(case_id, update_data)
         
         if not update_success:
-            return jsonify({'error': 'Failed to save report'}), 500
+            return jsonify({'error': 'Failed to save report path'}), 500
         
-        print("✅ Report generated successfully!")
+        print("✅ Report generated and saved successfully!")
         
         return jsonify({
             'message': 'Detailed report generated successfully',
-            'report': report_data
+            'report_path': report_path
         }), 201
         
     except Exception as e:

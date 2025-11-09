@@ -3,6 +3,7 @@ import { discussionAPI } from "@/services/api"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Textarea } from "@/components/ui/textarea"
+import { Statement } from "./Statement"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Heart, MessageSquare, Trash2, Send, Reply } from "lucide-react"
 import { toast } from "react-hot-toast"
@@ -219,9 +220,7 @@ export function DiscussionThread({ caseId }) {
                                   {formatTimeAgo(discussion.created_at)}
                                 </span>
                               </div>
-                              <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                                {discussion.content}
-                              </p>
+                              <Statement content={discussion.content} />
                             </div>
                           </div>
                           {user && (user.id === discussion.user_id || user._id === discussion.user_id) && (
@@ -324,9 +323,7 @@ export function DiscussionThread({ caseId }) {
                                         {formatTimeAgo(reply.created_at)}
                                       </span>
                                     </div>
-                                    <p className="text-foreground leading-relaxed whitespace-pre-wrap text-sm">
-                                      {reply.content}
-                                    </p>
+                                    <Statement content={reply.content} />
                                   </div>
                                 </div>
                                 {user && (user.id === reply.user_id || user._id === reply.user_id) && (

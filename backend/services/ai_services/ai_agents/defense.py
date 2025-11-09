@@ -80,6 +80,8 @@ class DefenseAgent(BaseAgent):
         Type: {case_data.get('case_type', 'unknown')}
         Client: {client_name}
         Charges/Claims: Based on {case_data.get('description', 'the allegations')}
+        Victim: {case_data.get('parties', {}).get('victim', 'Not specified')}
+        Witnesses: {', '.join(case_data.get('parties', {}).get('witnesses', [])) or 'None listed'}
         
         Defense Theory: {self.defense_strategy.get('main_theory', 'The evidence does not support guilt')}
         

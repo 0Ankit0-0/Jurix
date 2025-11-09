@@ -70,12 +70,16 @@ class JudgeAgent(BaseAgent):
         case_title = case_data.get('title', 'Unknown Case')
         plaintiff = case_data.get('parties', {}).get('plaintiff', 'Plaintiff')
         defendant = case_data.get('parties', {}).get('defendant', 'Defendant')
+        victim = case_data.get('parties', {}).get('victim', 'Not specified')
+        witnesses = case_data.get('parties', {}).get('witnesses', [])
         case_type = case_data.get('case_type', 'legal matter')
         
         prompt = f"""
         Case: {case_title}
         Type: {case_type}
         Parties: {plaintiff} v. {defendant}
+        Victim: {victim}
+        Witnesses: {', '.join(witnesses) if witnesses else 'None'}
         """ + OPENING_PROMPT
         
         return self.respond(prompt, "opening court session")
@@ -233,27 +237,31 @@ class JudgeAgent(BaseAgent):
         prompt = f"""
         Render final judgment as a judge in this case:
         
-        Case Summary: {case_summary}
-        Evidence Considered: {evidence_summary}
+        Case Title: {self.case_memory.get('title', 'N/A')}
+        Case Type: {case_type}
+        Case Description: {self.case_memory.get('description', 'N/A')}
+        Plaintiff: {self.case_memory.get('parties', {}).get('plaintiff', 'N/A')}
+        Defendant: {self.case_memory.get('parties', {}).get('defendant', 'N/A')}
         
         Legal Standard: {legal_standard}
-        Case Type: {case_type}
         Applicable Law: {', '.join(self.case_memory.get('applicable_law', ['general legal principles']))}
+        
+        Evidence Summary: 
+        {evidence_summary}
         
         Evidence Rulings Made: {len(self.evidence_rulings)} rulings on admissibility
         
         Your judgment should:
-        1. Summarize the key facts established by evidence
-        2. Apply the appropriate legal standard
-        3. Analyze how evidence meets or fails to meet burden of proof
-        4. Address key legal issues raised
-        5. Explain your reasoning clearly
-        6. Render specific verdict/judgment
-        7. Include any appropriate sentencing or orders
-        8. Maintain judicial dignity and impartiality
+        1. Summarize the key facts established by the evidence.
+        2. Apply the appropriate legal standard ({legal_standard}) to the facts.
+        3. Analyze how the evidence presented meets or fails to meet the burden of proof.
+        4. Address the key legal arguments from both the prosecution and defense.
+        5. Explain your legal reasoning clearly and logically.
+        6. Render a specific verdict or judgment (e.g., "guilty," "not guilty," "liable," "not liable").
+        7. If applicable, include any appropriate sentencing, remedies, or orders.
+        8. Maintain judicial dignity and impartiality throughout.
         
-        Be thorough in your legal analysis and fair to all parties.
-        Your decision should be based solely on law and evidence.
+        Be thorough in your legal analysis and fair to all parties. Your decision must be based solely on the law and the evidence presented in this simulation.
         """
         
         judgment = self.respond(prompt, "final judgment")
